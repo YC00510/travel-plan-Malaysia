@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>馬來西亞旅遊行程</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Day 切換 -->
+  <div class="days" id="dayButtons"></div>
+
+  <!-- 標題 -->
+  <h1 id="dayTitle"></h1>
+
+  <!-- 分類切換 -->
+  <div class="tabs">
+    <button class="tab active" data-category="spot">景點</button>
+    <button class="tab" data-category="food">美食</button>
+    <button class="tab" data-category="stay">住宿</button>
+  </div>
+
+  <!-- 行程內容 -->
+  <div class="content" id="schedule"></div>
+
+  <button class="add-btn" onclick="addPlace()">＋ 新增地點</button>
+
+  <!-- 待辦事項 -->
+  <h2>待辦事項</h2>
+  <ul id="todoList"></ul>
+  <button class="small-btn" onclick="addTodo()">＋ 新增待辦</button>
+
+  <!-- 行李清單 -->
+  <h2>行李清單</h2>
+  <ul id="luggageList"></ul>
+  <button class="small-btn" onclick="addLuggage()">＋ 新增行李</button>
+
+  <!-- 購物清單 -->
+  <h2>購物清單</h2>
+  <ul id="shoppingList"></ul>
+  <button class="small-btn" onclick="addShopping()">＋ 新增購物</button>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
+
+
+
+
+<style>
+body {
+  background: #f6f5f3;
+  font-family: sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.app {
+  width: 380px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.days {
+  display: flex;
+  overflow-x: auto;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.day-btn {
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: none;
+  background: #eee;
+}
+
+.day-btn.active {
+  background: #e5d5c3;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px;
+  border-radius: 20px;
+  border: none;
+  background: #eee;
+}
+
+.tab.active {
+  background: #e8dcca;
+}
+
+.card {
+  background: #faf9f7;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.time {
+  font-size: 12px;
+  color: #888;
+}
+
+.place {
+  font-size: 16px;
+}
+
+.note {
+  font-size: 13px;
+  color: #666;
+}
+
+.add-btn {
+  width: 100%;
+  margin: 12px 0;
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+  background: #d9cbb6;
+}
+
+.small-btn {
+  margin-bottom: 10px;
+  border: none;
+  background: #eee;
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+
+
+</style>
+
+
+<script>
+
+const days = [
+  { date: "2/10", city: "麻六甲" },
+  { date: "2/11", city: "波德申" },
+  { date: "2/12", city: "波德申" },
+  { date: "2/13", city: "KL" },
+  { date: "2/14", city: "KL" },
+  { date: "2/15", city: "梳邦" },
+  { date: "2/16", city: "回台灣" }
+];
+
+let currentDay = 0;
+let currentCategory = "spot";
+
+const data = days.map(() => ({
+  spot: [],
+  food: [],
+  stay: [],
+  todo: []
+}));
+
+const luggage = [];
+const shopping = [];
+
+function init() {
+  const dayButtons = document.getElementById("dayButtons");
+  days.forEach((d, i) => {
+    const btn = document.createElement("button");
+    btn.className = "day-btn" + (i === 0 ? " active" : "");
+    btn.innerText = `Day ${i + 1}`;
+    btn.onclick = () => switchDay(i);
+    dayButtons.appendChild(btn);
+  });
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      currentCategory = tab.dataset.category;
+      render();
+    };
+  });
+
+  render();
+}
+
+function switchDay(index) {
+  currentDay = index;
+  document.querySelectorAll(".day-btn").forEach((b, i) =>
+    b.classList.toggle("active", i === index)
+  );
+  render();
+}
+
+function render() {
+  document.getElementById("dayTitle").innerText =
+    `${days[currentDay].city} · ${days[currentDay].date}`;
+
+  const list = document.getElementById("schedule");
+  list.innerHTML = "";
+  data[currentDay][currentCategory].forEach(item => {
+    list.innerHTML += `
+      <div class="card">
+        <div class="time">${item.time}</div>
+        <div class="place">${item.name}</div>
+        <div class="note">${item.note}</div>
+        <a href="https://www.google.com/maps/search/${item.name}" target="_blank">📍 地圖</a>
+      </div>
+    `;
+  });
+
+  renderTodo();
+  renderList("luggageList", luggage);
+  renderList("shoppingList", shopping);
+}
+
+function addPlace() {
+  const time = prompt("時間");
+  const name = prompt("地點名稱");
+  const note = prompt("備註");
+  if (name) {
+    data[currentDay][currentCategory].push({ time, name, note });
+    render();
+  }
+}
+
+function renderTodo() {
+  const ul = document.getElementById("todoList");
+  ul.innerHTML = "";
+  data[currentDay].todo.forEach(t => {
+    ul.innerHTML += `<li>${t}</li>`;
+  });
+}
+
+function addTodo() {
+  const t = prompt("待辦事項");
+  if (t) {
+    data[currentDay].todo.push(t);
+    renderTodo();
+  }
+}
+
+function renderList(id, arr) {
+  const ul = document.getElementById(id);
+  ul.innerHTML = "";
+  arr.forEach(i => ul.innerHTML += `<li>${i}</li>`);
+}
+
+function addLuggage() {
+  const i = prompt("行李項目");
+  if (i) {
+    luggage.push(i);
+    render();
+  }
+}
+
+function addShopping() {
+  const i = prompt("購物項目");
+  if (i) {
+    shopping.push(i);
+    render();
+  }
+}
+
+init();
+</script>
+</body>
