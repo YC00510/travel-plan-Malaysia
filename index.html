@@ -102,155 +102,227 @@
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBOTh16RSCCca_FBUFiz0utDil-SlkZJKg",
-    authDomain: "travel-plan-544b5.firebaseapp.com",
-    projectId: "travel-plan-544b5",
-    storageBucket: "travel-plan-544b5.firebasestorage.app",
-    messagingSenderId: "794197854377",
-    appId: "1:794197854377:web:5ac7eb18afb56618cf01b8"
-  };
+// ===== Firebase 初始化 =====
+const firebaseConfig = {
+  apiKey: "你的 apiKey",
+  authDomain: "你的 authDomain",
+  projectId: "你的 projectId",
+  storageBucket: "你的 storageBucket",
+  messagingSenderId: "你的 messagingSenderId",
+  appId: "你的 appId"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  console.log("✅ Firebase 初始化成功", db);
+// ===== 行程資料 =====
+const days = [
+  { date: "2/9", city: "台灣出發" },
+  { date: "2/10", city: "麻六甲" },
+  { date: "2/11", city: "波德申" },
+  { date: "2/12", city: "波德申" },
+  { date: "2/13", city: "KL" },
+  { date: "2/14", city: "KL" },
+  { date: "2/15", city: "梳邦" },
+  { date: "2/16", city: "回台灣" }
+];
 
-  // ===================== 行程資料 ======================
-  const days = [
-    { date: "2/9", city: "台灣出發" },
-    { date: "2/10", city: "麻六甲" },
-    { date: "2/11", city: "波德申" },
-    { date: "2/12", city: "波德申" },
-    { date: "2/13", city: "KL" },
-    { date: "2/14", city: "KL" },
-    { date: "2/15", city: "梳邦" },
-    { date: "2/16", city: "回台灣" }
-  ];
+let currentDay = 0;
+let currentCategory = "spot";
 
-  let currentDay = 0;
-  let currentCategory = "spot";
+// 每一天自己的行程 + 待辦
+const data = days.map(() => ({
+  spot: [],
+  food: [],
+  stay: [],
+  todo: []
+}));
 
-  // 每一天自己的行程 + 待辦
-  const data = days.map(() => ({
-    spot: [],
-    food: [],
-    stay: [],
-    todo: []
-  }));
+const luggage = [];
+const shopping = [];
 
-  // 全旅程共用
-  const luggage = [];
-  const shopping = [];
+// ===== Firebase Collections =====
+const todoColl = collection(db, "todo");
+const luggageColl = collection(db, "luggage");
+const shoppingColl = collection(db, "shopping");
+const scheduleColl = collection(db, "schedule");
 
-  // ====== 工具函數 ======
-  function renderSimpleList(id, arr) {
-    const ul = document.getElementById(id);
-    ul.innerHTML = "";
-    arr.forEach(item => {
-      const li = document.createElement("li");
-      li.textContent = item;
-      ul.appendChild(li);
-    });
-  }
-
-  // ====== Day 按鈕 ======
-  function renderDayButtons() {
-    const container = document.getElementById("dayButtons");
-    container.innerHTML = "";
-    days.forEach((day, index) => {
-      const btn = document.createElement("button");
-      btn.className = "day-btn";
-      if (index === currentDay) btn.classList.add("active");
-      btn.textContent = `Day ${index + 1}`;
-      btn.onclick = () => {
-        currentDay = index;
-        updateActiveDay();
-        renderSchedule();
-        renderTodo();
-        renderScheduleItems();
-      };
-      container.appendChild(btn);
-    });
-  }
-
-  function updateActiveDay() {
-    document.querySelectorAll(".day-btn").forEach((btn, idx) => {
-      btn.classList.toggle("active", idx === currentDay);
-    });
-  }
-
-  // ====== Schedule & Tab ======
-  function renderSchedule() {
-    document.getElementById("dayTitle").textContent = `${days[currentDay].date} ${days[currentDay].city}`;
-  }
-
-  function renderScheduleItems() {
-    const container = document.getElementById("schedule");
-    container.innerHTML = "";
-    const items = data[currentDay][currentCategory];
-    items.forEach(place => {
-      const div = document.createElement("div");
-      div.className = "card";
-      div.textContent = place;
-      container.appendChild(div);
-    });
-  }
-
-  // Tab 切換
-  document.querySelectorAll(".tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      currentCategory = tab.dataset.category;
-      renderScheduleItems();
-    });
+// ===== 工具函數 =====
+function renderListWithDelete(id, arr, firebaseColl, extra = {}) {
+  const ul = document.getElementById(id);
+  ul.innerHTML = "";
+  arr.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.textContent = item.text ?? item;
+    
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "❌";
+    delBtn.style.marginLeft = "10px";
+    delBtn.onclick = async () => {
+      arr.splice(index, 1);
+      ul.removeChild(li);
+      if (item.id) {
+        await deleteDoc(doc(db, firebaseColl.path, item.id));
+      }
+    };
+    li.appendChild(delBtn);
+    ul.appendChild(li);
   });
+}
 
-  // ====== 新增項目 ======
-  window.addPlace = function () {
-    const t = prompt("新增地點");
-    if (t) {
-      data[currentDay][currentCategory].push(t);
+// ===== Day 按鈕 =====
+function renderDayButtons() {
+  const container = document.getElementById("dayButtons");
+  container.innerHTML = "";
+  days.forEach((day, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "day-btn";
+    if (idx === currentDay) btn.classList.add("active");
+    btn.textContent = `Day ${idx + 1}`;
+    btn.onclick = () => {
+      currentDay = idx;
+      updateActiveDay();
+      renderSchedule();
       renderScheduleItems();
-    }
-  };
+      renderTodo();
+      scrollActiveDayIntoView();
+    };
+    container.appendChild(btn);
+  });
+}
 
-  window.addTodo = function () {
-    const t = prompt("待辦事項");
-    if (t) {
-      data[currentDay].todo.push(t);
-      renderSimpleList("todoList", data[currentDay].todo);
-    }
-  };
+function updateActiveDay() {
+  document.querySelectorAll(".day-btn").forEach((btn, idx) => {
+    btn.classList.toggle("active", idx === currentDay);
+  });
+  scrollActiveDayIntoView();
+}
 
-  window.addLuggage = function () {
-    const t = prompt("行李項目");
-    if (t) {
-      luggage.push(t);
-      renderSimpleList("luggageList", luggage);
-    }
-  };
+function scrollActiveDayIntoView() {
+  const container = document.getElementById("dayButtons");
+  const activeBtn = container.querySelector(".day-btn.active");
+  if (activeBtn) activeBtn.scrollIntoView({ behavior: "smooth", inline: "center" });
+}
 
-  window.addShopping = function () {
-    const t = prompt("購物項目");
-    if (t) {
-      shopping.push(t);
-      renderSimpleList("shoppingList", shopping);
-    }
-  };
+// ===== Schedule & Tab =====
+function renderSchedule() {
+  document.getElementById("dayTitle").textContent = `${days[currentDay].date} ${days[currentDay].city}`;
+}
 
-  function renderTodo() {
-    renderSimpleList("todoList", data[currentDay].todo);
+function renderScheduleItems() {
+  const container = document.getElementById("schedule");
+  container.innerHTML = "";
+  const items = data[currentDay][currentCategory];
+  items.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.textContent = item.text ?? item;
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "❌";
+    delBtn.style.marginLeft = "10px";
+    delBtn.onclick = async () => {
+      items.splice(index, 1);
+      div.remove();
+      if (item.id) await deleteDoc(doc(db, scheduleColl.path, item.id));
+    };
+    div.appendChild(delBtn);
+    container.appendChild(div);
+  });
+}
+
+// Tab 切換
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    currentCategory = tab.dataset.category;
+    renderScheduleItems();
+  });
+});
+
+// ===== 新增項目 =====
+async function saveToFirebase(coll, obj) {
+  try {
+    const docRef = await addDoc(coll, obj);
+    obj.id = docRef.id; // 記錄 ID 方便刪除
+    return obj;
+  } catch (e) {
+    console.error("❌ 新增失敗", e);
   }
+}
 
-  // ====== 初始化 ======
+window.addPlace = async function() {
+  const t = prompt("新增地點");
+  if (t) {
+    const obj = await saveToFirebase(scheduleColl, { text: t, day: currentDay, category: currentCategory });
+    data[currentDay][currentCategory].push(obj);
+    renderScheduleItems();
+  }
+};
+
+window.addTodo = async function() {
+  const t = prompt("待辦事項");
+  if (t) {
+    const obj = await saveToFirebase(todoColl, { text: t, day: currentDay });
+    data[currentDay].todo.push(obj);
+    renderTodo();
+  }
+};
+
+window.addLuggage = async function() {
+  const t = prompt("行李項目");
+  if (t) {
+    const obj = await saveToFirebase(luggageColl, { text: t });
+    luggage.push(obj);
+    renderListWithDelete("luggageList", luggage, luggageColl);
+  }
+};
+
+window.addShopping = async function() {
+  const t = prompt("購物項目");
+  if (t) {
+    const obj = await saveToFirebase(shoppingColl, { text: t });
+    shopping.push(obj);
+    renderListWithDelete("shoppingList", shopping, shoppingColl);
+  }
+};
+
+// ===== 渲染 =====
+function renderTodo() {
+  renderListWithDelete("todoList", data[currentDay].todo, todoColl);
+}
+
+// ===== 初始化 =====
+(async function init() {
+  // 載入 Firebase 的資料
+  const loadData = async (coll, targetArr, dayKey = null, categoryKey = null) => {
+    const snapshot = await getDocs(coll);
+    snapshot.forEach(docSnap => {
+      const item = docSnap.data();
+      item.id = docSnap.id;
+      if (dayKey !== null && categoryKey !== null) {
+        targetArr[item.day][item.category].push(item);
+      } else {
+        targetArr.push(item);
+      }
+    });
+  };
+
+  await loadData(todoColl, data, "day", "todo");
+  await loadData(luggageColl, luggage);
+  await loadData(shoppingColl, shopping);
+  await loadData(scheduleColl, data, "day", "category");
+
   renderDayButtons();
   renderSchedule();
   renderScheduleItems();
   renderTodo();
+  renderListWithDelete("luggageList", luggage, luggageColl);
+  renderListWithDelete("shoppingList", shopping, shoppingColl);
+})();
 </script>
 
 </body>
