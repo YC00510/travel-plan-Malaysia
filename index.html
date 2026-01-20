@@ -4,35 +4,35 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>馬來西亞旅遊行程</title>
- 
 
   <style>
-
-
-
-    
+    /* 浮水印 */
     .watermark {
-  position: fixed;           
-  bottom: 20px;            
-  right: 20px;             
-  font-size: 16px;           
-  font-weight: bold;         
-  color: rgba(0, 0, 0, 0.3); 
-  pointer-events: none;     
-  user-select: none;         
-  z-index: 9999;             
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.2); 
-}
+      position: fixed;           
+      bottom: 20px;            
+      right: 20px;             
+      font-size: 16px;           
+      font-weight: bold;         
+      color: rgba(0, 0, 0, 0.3); 
+      pointer-events: none;     
+      user-select: none;         
+      z-index: 9999;             
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2); 
+    }
 
-  .page-title {
-  text-align: center;       /* 置中 */
-  font-size: 28px;          /* 大小 */
-  font-weight: bold;        /* 粗體 */
-  color: #d9cbb6;           /* 跟你 app 色系搭 */
-  margin-bottom: 20px;      /* 下方留空間 */
-  letter-spacing: 1px;      /* 字間稍微拉開 */
-}
-    
+    /* 標題卡片 */
+    .title-card {
+      background: #f3e9d2;       /* 柔和背景色 */
+      padding: 12px 20px;
+      border-radius: 16px;       /* 圓角 */
+      text-align: center;
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+      color: #d9cbb6;           
+    }
+
     body {
       background: #f6f5f3;
       font-family: sans-serif;
@@ -46,9 +46,6 @@
       border-radius: 20px;
       padding: 20px;
     }
-
-
-
     .days {
       display: flex;
       overflow-x: auto;
@@ -96,44 +93,47 @@
       background: #d9cbb6;
       cursor: pointer;
     }
-
-
   </style>
 </head>
 
 <body>
-   <h1 class="page-title">馬來西亞旅遊行程</h1>
-<div class="app">
-  <div class="days" id="dayButtons"></div>
-  <h1 id="dayTitle"></h1>
+  
+  <div class="title-card">馬來西亞旅遊行程</div>
 
-  <div class="tabs">
-    <button class="tab active" data-category="spot">景點</button>
-    <button class="tab" data-category="food">美食</button>
-    <button class="tab" data-category="stay">住宿</button>
+  
+  <div class="app">
+    <div class="days" id="dayButtons"></div>
+    <h2 id="dayTitle"></h2>
+
+    <div class="tabs">
+      <button class="tab active" data-category="spot">景點</button>
+      <button class="tab" data-category="food">美食</button>
+      <button class="tab" data-category="stay">住宿</button>
+    </div>
+
+    <div id="schedule"></div>
+    <button class="add-btn" onclick="addPlace()">＋ 新增地點</button>
+
+    <hr>
+
+    <h2>待辦事項</h2>
+    <ul id="todoList"></ul>
+    <button class="add-btn" onclick="addTodo()">＋ 新增待辦</button>
+
+    <h2>行李清單</h2>
+    <ul id="luggageList"></ul>
+    <button class="add-btn" onclick="addLuggage()">＋ 新增行李</button>
+
+    <h2>購物清單</h2>
+    <ul id="shoppingList"></ul>
+    <button class="add-btn" onclick="addShopping()">＋ 新增購物</button>
   </div>
 
-  <div id="schedule"></div>
-  <button class="add-btn" onclick="addPlace()">＋ 新增地點</button>
-
-  <hr>
-
-<h2>待辦事項</h2>
-<ul id="todoList"></ul>
-<button class="add-btn" onclick="addTodo()">＋ 新增待辦</button>
-
-<h2>行李清單</h2>
-<ul id="luggageList"></ul>
-<button class="add-btn" onclick="addLuggage()">＋ 新增行李</button>
-
-<h2>購物清單</h2>
-<ul id="shoppingList"></ul>
-<button class="add-btn" onclick="addShopping()">＋ 新增購物</button>
-
-<div class="watermark">made by Yuchi</div>
   
-  
-</div>
+  <div class="watermark">made by Yuchi</div>
+</body>
+</html>
+
 
 <script type="module">
 
