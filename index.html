@@ -163,9 +163,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* ======================
-   基本狀態
-====================== */
+
 const days = [
   { date: "2/9", city: "台灣出發" },
   { date: "2/10", city: "馬六甲" },
@@ -202,7 +200,7 @@ const shoppingColl = collection(db, "shopping");
    資料讀取
 ====================== */
 async function loadAllData() {
-  // 清空本地狀態
+  // 清空
   data.forEach(d => {
     d.spot = [];
     d.food = [];
@@ -221,13 +219,13 @@ scheduleSnap.forEach(d => {
   const day = Number(item.day);
   const cat = item.category;
 
-  // 🚨 防呆檢查
+  // 防呆檢查
   if (
     Number.isNaN(day) ||
     !data[day] ||
     !data[day][cat]
   ) {
-    console.warn("⚠️ 略過壞資料", item);
+    console.warn("略過壞資料", item);
     return;
   }
 
@@ -305,7 +303,7 @@ function renderScheduleItems() {
     text.textContent = item.text;
 
     const mapBtn = document.createElement("button");
-    mapBtn.textContent = "📍 查看地圖";
+    mapBtn.textContent = "查看地圖";
     mapBtn.onclick = () => {
       window.open(
         `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.text)}`,
