@@ -124,11 +124,11 @@ const db = getFirestore(app);
 // ===== Day 與資料 =====
 const days = [
   { date: "2/9", city: "台灣出發" },
-  { date: "2/10", city: "麻六甲" },
+  { date: "2/10", city: "馬六甲" },
   { date: "2/11", city: "波德申" },
   { date: "2/12", city: "波德申" },
-  { date: "2/13", city: "KL" },
-  { date: "2/14", city: "KL" },
+  { date: "2/13", city: "吉隆坡" },
+  { date: "2/14", city: "吉隆坡" },
   { date: "2/15", city: "梳邦" },
   { date: "2/16", city: "回台灣" }
 ];
@@ -147,24 +147,48 @@ const luggageColl = collection(db, "luggage");
 const shoppingColl = collection(db, "shopping");
 
 // ===== 工具函數 =====
-function renderListWithDelete(id, arr, firebaseColl) {
-  const ul = document.getElementById(id);
-  ul.innerHTML = "";
-  arr.forEach((item, index) => {
-    const li = document.createElement("li");
-    li.textContent = item.text;
+function renderScheduleItems() {
+  const container = document.getElementById("schedule");
+  container.innerHTML = "";
+
+  const items = data[currentDay][currentCategory];
+
+  items.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "card";
+
+    // 地點文字
+    const text = document.createElement("div");
+    text.textContent = item.text;
+
+    // 查看地圖按鈕
+    const mapBtn = document.createElement("button");
+    mapBtn.textContent = "📍 查看地圖";
+    mapBtn.style.marginTop = "6px";
+    mapBtn.onclick = () => {
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.text)}`;
+      window.open(url, "_blank");
+    };
+
+    // 刪除按鈕（你原本的）
     const delBtn = document.createElement("button");
     delBtn.textContent = "X";
     delBtn.style.marginLeft = "10px";
     delBtn.onclick = async () => {
-      arr.splice(index, 1);
-      ul.removeChild(li);
-      if (item.id) await deleteDoc(doc(db, firebaseColl.path, item.id));
+      items.splice(index, 1);
+      div.remove();
+      if (item.id) {
+        await deleteDoc(doc(db, scheduleColl.path, item.id));
+      }
     };
-    li.appendChild(delBtn);
-    ul.appendChild(li);
+
+    div.appendChild(text);
+    div.appendChild(mapBtn);
+    div.appendChild(delBtn);
+    container.appendChild(div);
   });
 }
+
 
 // ===== Day 按鈕 =====
 function renderDayButtons() {
