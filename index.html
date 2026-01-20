@@ -130,20 +130,24 @@ const days = [
 let currentDay = 0;
 let currentCategory = "spot";
 
+// 每一天資料
 const data = days.map(() => ({ spot: [], food: [], stay: [], todo: [] }));
 const luggage = [];
 const shopping = [];
 
+// ===== Firebase Collections =====
 const scheduleColl = collection(db, "schedule");
 const todoColl = collection(db, "todo");
 const luggageColl = collection(db, "luggage");
 const shoppingColl = collection(db, "shopping");
 
-// ===== 工具函數 =====
+// ===== 渲染函數 =====
 function renderScheduleItems() {
   const container = document.getElementById("schedule");
   container.innerHTML = "";
+
   const items = data[currentDay][currentCategory];
+
   items.forEach((item, index) => {
     const div = document.createElement("div");
     div.className = "card";
@@ -165,7 +169,9 @@ function renderScheduleItems() {
     delBtn.onclick = async () => {
       items.splice(index, 1);
       div.remove();
-      if(item.id) await deleteDoc(doc(db, scheduleColl.path, item.id));
+      if (item.id) {
+        await deleteDoc(doc(db, scheduleColl.path, item.id));
+      }
     };
 
     div.appendChild(text);
@@ -181,8 +187,8 @@ function renderDayButtons() {
   days.forEach((day, idx) => {
     const btn = document.createElement("button");
     btn.className = "day-btn";
-    if(idx === currentDay) btn.classList.add("active");
-    btn.textContent = `Day ${idx+1}`;
+    if (idx === currentDay) btn.classList.add("active");
+    btn.textContent = `Day ${idx + 1}`;
     btn.onclick = () => {
       currentDay = idx;
       updateActiveDay();
@@ -204,7 +210,7 @@ function updateActiveDay() {
 function scrollActiveDayIntoView() {
   const container = document.getElementById("dayButtons");
   const activeBtn = container.querySelector(".day-btn.active");
-  if(activeBtn) activeBtn.scrollIntoView({ behavior: "smooth", inline: "center" });
+  if (activeBtn) activeBtn.scrollIntoView({ behavior: "smooth", inline: "center" });
 }
 
 function renderSchedule() {
@@ -221,72 +227,66 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
-// 新增資料到 Firebase
-async function saveToFirebase(coll, obj){
-  try{
+// ===== 儲存到 Firebase =====
+async function saveToFirebase(coll, obj) {
+  try {
     const docRef = await addDoc(coll, obj);
     obj.id = docRef.id;
     return obj;
-  }catch(e){
-    alert("新增失敗，請確認 Firebase 權限");
-    console.error(e);
+  } catch (e) {
+    alert("新增失敗，確認 Firebase 權限");
+    console.error("新增失敗", e);
     return null;
   }
 }
 
-// 新增函數
+// ===== 新增項目 =====
 window.addPlace = async function() {
   const t = prompt("新增地點");
   if (t && t.trim() !== "") {
     await saveToFirebase(scheduleColl, { text: t, day: currentDay, category: currentCategory });
-    // 不要再手動 push 到 data
-    // onSnapshot 會自動幫你加
+    // 不手動 push，交給 onSnapshot 同步
   }
 };
 
-  const t = prompt("新增地點");
-  if(t && t.trim() !== ""){
-    const obj = await saveToFirebase(scheduleColl, { text:t, day:currentDay, category:currentCategory });
-    if(obj){ data[currentDay][currentCategory].push(obj); renderScheduleItems(); }
-  }
-};
-window.addTodo = async function(){
+window.addTodo = async function() {
   const t = prompt("待辦事項");
-  if(t && t.trim() !== ""){
-    const obj = await saveToFirebase(todoColl, { text:t, day:currentDay });
-    if(obj){ data[currentDay].todo.push(obj); renderTodo(); }
-  }
-};
-window.addLuggage = async function(){
-  const t = prompt("行李項目");
-  if(t && t.trim() !== ""){
-    const obj = await saveToFirebase(luggageColl, { text:t });
-    if(obj){ luggage.push(obj); renderListWithDelete("luggageList", luggage, luggageColl); }
-  }
-};
-window.addShopping = async function(){
-  const t = prompt("購物項目");
-  if(t && t.trim() !== ""){
-    const obj = await saveToFirebase(shoppingColl, { text:t });
-    if(obj){ shopping.push(obj); renderListWithDelete("shoppingList", shopping, shoppingColl); }
+  if (t && t.trim() !== "") {
+    await saveToFirebase(todoColl, { text: t, day: currentDay });
   }
 };
 
-// 渲染列表（待辦、行李、購物）
-function renderListWithDelete(containerId, arr, coll){
+window.addLuggage = async function() {
+  const t = prompt("行李項目");
+  if (t && t.trim() !== "") {
+    await saveToFirebase(luggageColl, { text: t });
+  }
+};
+
+window.addShopping = async function() {
+  const t = prompt("購物項目");
+  if (t && t.trim() !== "") {
+    await saveToFirebase(shoppingColl, { text: t });
+  }
+};
+
+// ===== 通用渲染函數 =====
+function renderListWithDelete(containerId, arr, coll) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
-  arr.forEach((item, index)=>{
+  arr.forEach((item, index) => {
     const li = document.createElement("li");
     li.textContent = item.text;
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "X";
     delBtn.style.marginLeft = "8px";
-    delBtn.onclick = async ()=>{
-      arr.splice(index,1);
+    delBtn.onclick = async () => {
+      arr.splice(index, 1);
       li.remove();
-      if(item.id) await deleteDoc(doc(db, coll.path, item.id));
+      if (item.id) {
+        await deleteDoc(doc(db, coll.path, item.id));
+      }
     };
 
     li.appendChild(delBtn);
@@ -294,50 +294,21 @@ function renderListWithDelete(containerId, arr, coll){
   });
 }
 
-// 渲染待辦
-function renderTodo(){
+function renderTodo() {
   renderListWithDelete("todoList", data[currentDay].todo, todoColl);
 }
 
 // ===== 初始化 =====
-async function init(){
-  // 清空
-  data.forEach(day => { day.spot=[]; day.food=[]; day.stay=[]; day.todo=[]; });
-  luggage.length=0; shopping.length=0;
-
-  // 讀 Firebase
-  const loadCollection = async (coll, targetArr, dayKey=null, categoryKey=null)=>{
-    const snapshot = await getDocs(coll);
-    snapshot.forEach(docSnap=>{
-      const item = docSnap.data();
-      item.id = docSnap.id;
-      if(dayKey!==null && categoryKey!==null){
-        const dayIndex = Number(item[dayKey]);
-        const cat = item[categoryKey];
-        if(!isNaN(dayIndex) && targetArr[dayIndex] && targetArr[dayIndex][cat]){
-          targetArr[dayIndex][cat].push(item);
-        }
-      }else{
-        targetArr.push(item);
-      }
-    });
-  };
-
-  await loadCollection(scheduleColl, data, "day","category");
-  await loadCollection(luggageColl, luggage);
-  await loadCollection(shoppingColl, shopping);
-
-  const todoSnap = await getDocs(todoColl);
-  todoSnap.forEach(docSnap=>{
-    const item = docSnap.data();
-    item.id = docSnap.id;
-    const dayIndex = Number(item.day);
-    if(!isNaN(dayIndex) && data[dayIndex]){
-      data[dayIndex].todo.push(item);
-    }
+async function init() {
+  data.forEach(day => {
+    day.spot = [];
+    day.food = [];
+    day.stay = [];
+    day.todo = [];
   });
+  luggage.length = 0;
+  shopping.length = 0;
 
-  // render
   renderDayButtons();
   renderSchedule();
   renderScheduleItems();
@@ -345,24 +316,80 @@ async function init(){
   renderListWithDelete("luggageList", luggage, luggageColl);
   renderListWithDelete("shoppingList", shopping, shoppingColl);
 
-  // ===== 可選：即時同步 =====
-  onSnapshot(scheduleColl, snapshot=>{
-    snapshot.docChanges().forEach(change=>{
-      const item = change.doc.data(); item.id = change.doc.id;
-      if(change.type==="added"){
-        data[item.day][item.category].push(item);
+  // ===== Firebase 即時監聽 =====
+  onSnapshot(scheduleColl, snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const item = change.doc.data();
+      item.id = change.doc.id;
+
+      if (change.type === "added") {
+        if (!data[item.day][item.category].some(i => i.id === item.id)) {
+          data[item.day][item.category].push(item);
+        }
       }
-      if(change.type==="removed"){
+      if (change.type === "removed") {
         const arr = data[item.day][item.category];
-        const idx = arr.findIndex(i=>i.id===item.id);
-        if(idx>-1) arr.splice(idx,1);
+        const idx = arr.findIndex(i => i.id === item.id);
+        if (idx > -1) arr.splice(idx, 1);
       }
     });
     renderScheduleItems();
   });
+
+  onSnapshot(todoColl, snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const item = change.doc.data();
+      item.id = change.doc.id;
+
+      if (change.type === "added") {
+        if (!data[item.day].todo.some(i => i.id === item.id)) {
+          data[item.day].todo.push(item);
+        }
+      }
+      if (change.type === "removed") {
+        const arr = data[item.day].todo;
+        const idx = arr.findIndex(i => i.id === item.id);
+        if (idx > -1) arr.splice(idx, 1);
+      }
+    });
+    renderTodo();
+  });
+
+  onSnapshot(luggageColl, snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const item = change.doc.data();
+      item.id = change.doc.id;
+
+      if (change.type === "added") {
+        if (!luggage.some(i => i.id === item.id)) luggage.push(item);
+      }
+      if (change.type === "removed") {
+        const idx = luggage.findIndex(i => i.id === item.id);
+        if (idx > -1) luggage.splice(idx, 1);
+      }
+    });
+    renderListWithDelete("luggageList", luggage, luggageColl);
+  });
+
+  onSnapshot(shoppingColl, snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const item = change.doc.data();
+      item.id = change.doc.id;
+
+      if (change.type === "added") {
+        if (!shopping.some(i => i.id === item.id)) shopping.push(item);
+      }
+      if (change.type === "removed") {
+        const idx = shopping.findIndex(i => i.id === item.id);
+        if (idx > -1) shopping.splice(idx, 1);
+      }
+    });
+    renderListWithDelete("shoppingList", shopping, shoppingColl);
+  });
 }
 
 init();
+
 </script>
 
 </body>
