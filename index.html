@@ -122,111 +122,54 @@
   const db = getFirestore(app);
   console.log("✅ Firebase 初始化成功", db);
 
-  /* =====================
-     行程 App 本體
-  ====================== */
-  const days = [
-    { date: "2/9", city: "台灣出發" },
-    { date: "2/10", city: "麻六甲" },
-    { date: "2/11", city: "波德申" },
-    { date: "2/12", city: "波德申" },
-    { date: "2/13", city: "KL" },
-    { date: "2/14", city: "KL" },
-    { date: "2/15", city: "梳邦" },
-    { date: "2/16", city: "回台灣" }
-  ];
+ /* =====================
+   行程資料
+===================== */
+const days = [
+  { date: "2/9", city: "台灣出發" },
+  { date: "2/10", city: "麻六甲" },
+  { date: "2/11", city: "波德申" },
+  { date: "2/12", city: "波德申" },
+  { date: "2/13", city: "KL" },
+  { date: "2/14", city: "KL" },
+  { date: "2/15", city: "梳邦" },
+  { date: "2/16", city: "回台灣" }
+];
 
-  let currentDay = 0;
-  let currentCategory = "spot";
+let currentDay = 0;
+let currentCategory = "spot";
 
-  const data = days.map(() => ({
-    const todo = [];
+/* 每一天自己的行程 + 待辦 */
+const data = days.map(() => ({
+  spot: [],
+  food: [],
+  stay: [],
+  todo: []
+}));
+
+/* 全旅程共用 */
 const luggage = [];
 const shopping = [];
-    spot: [],
-    food: [],
-    stay: []
-  }));
 
-  function init() {
-    const dayButtons = document.getElementById("dayButtons");
-    dayButtons.innerHTML = "";
-
-    days.forEach((d, i) => {
-      const btn = document.createElement("button");
-      btn.className = "day-btn" + (i === 0 ? " active" : "");
-      btn.innerText = `Day ${i + 1}`;
-      btn.onclick = () => switchDay(i);
-      dayButtons.appendChild(btn);
-    });
-
-    document.querySelectorAll(".tab").forEach(tab => {
-      tab.onclick = () => {
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        currentCategory = tab.dataset.category;
-        render();
-      };
-    });
-
-    render();
-  }
-
-  function switchDay(index) {
-    currentDay = index;
-    document.querySelectorAll(".day-btn").forEach((b, i) =>
-      b.classList.toggle("active", i === index)
-    );
-    render();
-  }
-
-  function render() {
-    document.getElementById("dayTitle").innerText =
-      `${days[currentDay].city} · ${days[currentDay].date}`;
-
-    const list = document.getElementById("schedule");
-    list.innerHTML = "";
-
-    data[currentDay][currentCategory].forEach(item => {
-      list.innerHTML += `
-        <div class="card">
-          <div>${item.time || ""}</div>
-          <strong>${item.name}</strong>
-          <div>${item.note || ""}</div>
-        </div>
-      `;
-    });
-  }
-
-  window.addPlace = function () {
-    const time = prompt("時間");
-    const name = prompt("地點名稱");
-    const note = prompt("備註");
-    if (name) {
-      data[currentDay][currentCategory].push({ time, name, note });
-      render();
-    }
-  };
-
-function renderSimpleList(id, arr) {
+ function renderSimpleList(id, arr) {
   const ul = document.getElementById(id);
   ul.innerHTML = "";
-  arr.forEach((item, index) => {
+  arr.forEach(item => {
     const li = document.createElement("li");
     li.textContent = item;
     ul.appendChild(li);
   });
 }
 
-window.addTodo = function () {
+  window.addTodo = function () {
   const t = prompt("待辦事項");
   if (t) {
-    todo.push(t);
-    renderSimpleList("todoList", todo);
+    data[currentDay].todo.push(t);
+    renderSimpleList("todoList", data[currentDay].todo);
   }
 };
 
-window.addLuggage = function () {
+  window.addLuggage = function () {
   const t = prompt("行李項目");
   if (t) {
     luggage.push(t);
@@ -234,7 +177,7 @@ window.addLuggage = function () {
   }
 };
 
-window.addShopping = function () {
+  window.addShopping = function () {
   const t = prompt("購物項目");
   if (t) {
     shopping.push(t);
@@ -242,8 +185,6 @@ window.addShopping = function () {
   }
 };
 
-  
-  init();
 </script>
 </body>
 </html>
