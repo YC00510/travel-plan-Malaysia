@@ -228,26 +228,7 @@ function renderSchedule() {
   document.getElementById("dayTitle").textContent = `${days[currentDay].date} ${days[currentDay].city}`;
 }
 
-function renderScheduleItems() {
-  const container = document.getElementById("schedule");
-  container.innerHTML = "";
-  const items = data[currentDay][currentCategory];
-  items.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.textContent = item.text;
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "X";
-    delBtn.style.marginLeft = "10px";
-    delBtn.onclick = async () => {
-      items.splice(index, 1);
-      div.remove();
-      if (item.id) await deleteDoc(doc(db, scheduleColl.path, item.id));
-    };
-    div.appendChild(delBtn);
-    container.appendChild(div);
-  });
-}
+
 
 // Tab 切換
 document.querySelectorAll(".tab").forEach(tab => {
