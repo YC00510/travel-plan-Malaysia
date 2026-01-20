@@ -149,7 +149,7 @@ function renderListWithDelete(id, arr, firebaseColl) {
   ul.innerHTML = "";
   arr.forEach((item, index) => {
     const li = document.createElement("li");
-    li.textContent = item.text ?? item;
+    li.textContent = item.text;
     const delBtn = document.createElement("button");
     delBtn.textContent = "X";
     delBtn.style.marginLeft = "10px";
@@ -208,7 +208,7 @@ function renderScheduleItems() {
   items.forEach((item, index) => {
     const div = document.createElement("div");
     div.className = "card";
-    div.textContent = item.text ?? item;
+    div.textContent = item.text;
     const delBtn = document.createElement("button");
     delBtn.textContent = "X";
     delBtn.style.marginLeft = "10px";
@@ -239,7 +239,7 @@ async function saveToFirebase(coll, obj) {
     obj.id = docRef.id;
     return obj;
   } catch (e) {
-    alert("❌ 新增失敗，請確認 Firebase 權限");
+    alert(" 新增失敗，確認 Firebase 權限");
     console.error("新增失敗", e);
     return null;
   }
@@ -301,6 +301,7 @@ async function init() {
   renderScheduleItems();
   renderTodo();
   renderListWithDelete("luggageList", luggage, luggageColl);
+  renderListWithDelete("todoList", todo, todoColl);
   renderListWithDelete("shoppingList", shopping, shoppingColl);
 
   // ===== 從 Firebase 讀資料 =====
@@ -321,7 +322,7 @@ async function init() {
     });
   };
 
-  await loadCollection(scheduleColl, data, "day", "category");
+  await loadCollection(scheduleColl, data, "day", "schedule");
   await loadCollection(todoColl, data, "day", "todo");
   await loadCollection(luggageColl, luggage);
   await loadCollection(shoppingColl, shopping);
