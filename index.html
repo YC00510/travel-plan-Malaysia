@@ -167,6 +167,7 @@ function loadData() {
 }
   
 const days = [
+  { date: "2/9", city: "台灣出發" },
   { date: "2/10", city: "麻六甲" },
   { date: "2/11", city: "波德申" },
   { date: "2/12", city: "波德申" },
@@ -295,5 +296,31 @@ function addShopping() {
 }
 
 init();
+
+  <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+  //import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBOTh16RSCCca_FBUFiz0utDil-SlkZJKg",
+    authDomain: "travel-plan-544b5.firebaseapp.com",
+    projectId: "travel-plan-544b5",
+    storageBucket: "travel-plan-544b5.firebasestorage.app",
+    messagingSenderId: "794197854377",
+    appId: "1:794197854377:web:5ac7eb18afb56618cf01b8",
+    measurementId: "G-YQLWLZ66CS"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+   // 先測試用
+  console.log("Firebase OK", db);
 </script>
 </body>
