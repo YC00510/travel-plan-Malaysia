@@ -235,7 +235,15 @@ async function saveToFirebase(coll, obj){
 }
 
 // 新增函數
-window.addPlace = async function(){
+window.addPlace = async function() {
+  const t = prompt("新增地點");
+  if (t && t.trim() !== "") {
+    await saveToFirebase(scheduleColl, { text: t, day: currentDay, category: currentCategory });
+    // 不要再手動 push 到 data
+    // onSnapshot 會自動幫你加
+  }
+};
+
   const t = prompt("新增地點");
   if(t && t.trim() !== ""){
     const obj = await saveToFirebase(scheduleColl, { text:t, day:currentDay, category:currentCategory });
