@@ -107,7 +107,7 @@ import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https
 
 // ===== Firebase 初始化 =====
 const firebaseConfig = {
- apiKey: "AIzaSyBOTh16RSCCca_FBUFiz0utDil-SlkZJKg",
+  apiKey: "AIzaSyBOTh16RSCCca_FBUFiz0utDil-SlkZJKg",
   authDomain: "travel-plan-544b5.firebaseapp.com",
   projectId: "travel-plan-544b5",
   storageBucket: "travel-plan-544b5.firebasestorage.app",
@@ -247,7 +247,7 @@ async function saveToFirebase(coll, obj) {
     obj.id = docRef.id;
     return obj;
   } catch (e) {
-    console.error("新增失敗", e);
+    console.error("❌ 新增失敗", e);
   }
 }
 
@@ -308,8 +308,15 @@ function renderTodo() {
     snapshot.forEach(docSnap => {
       const item = docSnap.data();
       item.id = docSnap.id;
+
       if (dayKey !== null && categoryKey !== null) {
-        targetArr[item.day][item.category].push(item);
+        const dayIndex = Number(item[dayKey]);       // 確保是數字
+        const cat = item[categoryKey];
+        if (!isNaN(dayIndex) && targetArr[dayIndex] && targetArr[dayIndex][cat]) {
+          targetArr[dayIndex][cat].push(item);
+        } else {
+          console.warn("⚠️ 無法對應 day/category:", item);
+        }
       } else {
         targetArr.push(item);
       }
@@ -328,5 +335,6 @@ function renderTodo() {
   renderListWithDelete("shoppingList", shopping, shoppingColl);
 })();
 </script>
+
 </body>
 </html>
