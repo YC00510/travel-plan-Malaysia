@@ -103,7 +103,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 // ===== Firebase 初始化 =====
 const firebaseConfig = {
@@ -150,22 +150,19 @@ const shoppingColl = collection(db, "shopping");
 const scheduleColl = collection(db, "schedule");
 
 // ===== 工具函數 =====
-function renderListWithDelete(id, arr, firebaseColl, extra = {}) {
+function renderListWithDelete(id, arr, firebaseColl) {
   const ul = document.getElementById(id);
   ul.innerHTML = "";
   arr.forEach((item, index) => {
     const li = document.createElement("li");
     li.textContent = item.text ?? item;
-    
     const delBtn = document.createElement("button");
     delBtn.textContent = "❌";
     delBtn.style.marginLeft = "10px";
     delBtn.onclick = async () => {
       arr.splice(index, 1);
       ul.removeChild(li);
-      if (item.id) {
-        await deleteDoc(doc(db, firebaseColl.path, item.id));
-      }
+      if (item.id) await deleteDoc(doc(db, firebaseColl.path, item.id));
     };
     li.appendChild(delBtn);
     ul.appendChild(li);
@@ -219,7 +216,6 @@ function renderScheduleItems() {
     const div = document.createElement("div");
     div.className = "card";
     div.textContent = item.text ?? item;
-
     const delBtn = document.createElement("button");
     delBtn.textContent = "❌";
     delBtn.style.marginLeft = "10px";
@@ -247,7 +243,7 @@ document.querySelectorAll(".tab").forEach(tab => {
 async function saveToFirebase(coll, obj) {
   try {
     const docRef = await addDoc(coll, obj);
-    obj.id = docRef.id; // 記錄 ID 方便刪除
+    obj.id = docRef.id;
     return obj;
   } catch (e) {
     console.error("❌ 新增失敗", e);
@@ -297,7 +293,15 @@ function renderTodo() {
 
 // ===== 初始化 =====
 (async function init() {
-  // 載入 Firebase 的資料
+  // 1️⃣ 先渲染 Day 按鈕
+  renderDayButtons();
+  renderSchedule();
+  renderScheduleItems();
+  renderTodo();
+  renderListWithDelete("luggageList", luggage, luggageColl);
+  renderListWithDelete("shoppingList", shopping, shoppingColl);
+
+  // 2️⃣ 再讀 Firebase
   const loadData = async (coll, targetArr, dayKey = null, categoryKey = null) => {
     const snapshot = await getDocs(coll);
     snapshot.forEach(docSnap => {
@@ -316,14 +320,12 @@ function renderTodo() {
   await loadData(shoppingColl, shopping);
   await loadData(scheduleColl, data, "day", "category");
 
-  renderDayButtons();
-  renderSchedule();
+  // 3️⃣ Firebase 資料載入完後只更新畫面
   renderScheduleItems();
   renderTodo();
   renderListWithDelete("luggageList", luggage, luggageColl);
   renderListWithDelete("shoppingList", shopping, shoppingColl);
 })();
 </script>
-
 </body>
 </html>
