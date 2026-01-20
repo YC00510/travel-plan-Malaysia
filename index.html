@@ -298,9 +298,29 @@ window.addShopping = async function() {
 };
 
 // ===== 渲染 =====
-function renderTodo() {
-  renderListWithDelete("todoList", data[currentDay].todo, todoColl);
+function renderListWithDelete(containerId, arr, coll) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+  arr.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.textContent = item.text;
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "X";
+    delBtn.style.marginLeft = "8px";
+    delBtn.onclick = async () => {
+      arr.splice(index, 1);
+      li.remove();
+      if (item.id) {
+        await deleteDoc(doc(db, coll.path, item.id));
+      }
+    };
+
+    li.appendChild(delBtn);
+    container.appendChild(li);
+  });
 }
+
 
 // ===== 初始化，讀 Firebase =====
 async function init() {
@@ -314,7 +334,12 @@ data.forEach(day => {
 luggage.length = 0;
 shopping.length = 0;
 
-
+  renderDayButtons();
+  renderSchedule();
+  renderScheduleItems();
+  renderTodo();
+  renderListWithDelete("luggageList", luggage, luggageColl);
+  renderListWithDelete("shoppingList", shopping, shoppingColl);
 
   // ===== 從 Firebase 讀資料 =====
   const loadCollection = async (coll, targetArr, dayKey = null, categoryKey = null) => {
