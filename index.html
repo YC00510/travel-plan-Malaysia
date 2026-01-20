@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>馬來西亞旅遊行程</title>
 
-  
-
   <style>
     body {
       background: #f6f5f3;
@@ -103,10 +101,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
-
- 
-
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 // ===== Firebase 初始化 =====
 const firebaseConfig = {
@@ -135,12 +130,10 @@ const days = [
 let currentDay = 0;
 let currentCategory = "spot";
 
-// 每一天資料
 const data = days.map(() => ({ spot: [], food: [], stay: [], todo: [] }));
 const luggage = [];
 const shopping = [];
 
-// ===== Firebase Collections =====
 const scheduleColl = collection(db, "schedule");
 const todoColl = collection(db, "todo");
 const luggageColl = collection(db, "luggage");
@@ -150,18 +143,14 @@ const shoppingColl = collection(db, "shopping");
 function renderScheduleItems() {
   const container = document.getElementById("schedule");
   container.innerHTML = "";
-
   const items = data[currentDay][currentCategory];
-
   items.forEach((item, index) => {
     const div = document.createElement("div");
     div.className = "card";
 
-    // 地點文字
     const text = document.createElement("div");
     text.textContent = item.text;
 
-    // 查看地圖按鈕
     const mapBtn = document.createElement("button");
     mapBtn.textContent = "📍 查看地圖";
     mapBtn.style.marginTop = "6px";
@@ -170,16 +159,13 @@ function renderScheduleItems() {
       window.open(url, "_blank");
     };
 
-    // 刪除按鈕（你原本的）
     const delBtn = document.createElement("button");
     delBtn.textContent = "X";
     delBtn.style.marginLeft = "10px";
     delBtn.onclick = async () => {
       items.splice(index, 1);
       div.remove();
-      if (item.id) {
-        await deleteDoc(doc(db, scheduleColl.path, item.id));
-      }
+      if(item.id) await deleteDoc(doc(db, scheduleColl.path, item.id));
     };
 
     div.appendChild(text);
@@ -189,16 +175,14 @@ function renderScheduleItems() {
   });
 }
 
-
-// ===== Day 按鈕 =====
 function renderDayButtons() {
   const container = document.getElementById("dayButtons");
   container.innerHTML = "";
   days.forEach((day, idx) => {
     const btn = document.createElement("button");
     btn.className = "day-btn";
-    if (idx === currentDay) btn.classList.add("active");
-    btn.textContent = `Day ${idx + 1}`;
+    if(idx === currentDay) btn.classList.add("active");
+    btn.textContent = `Day ${idx+1}`;
     btn.onclick = () => {
       currentDay = idx;
       updateActiveDay();
@@ -220,15 +204,12 @@ function updateActiveDay() {
 function scrollActiveDayIntoView() {
   const container = document.getElementById("dayButtons");
   const activeBtn = container.querySelector(".day-btn.active");
-  if (activeBtn) activeBtn.scrollIntoView({ behavior: "smooth", inline: "center" });
+  if(activeBtn) activeBtn.scrollIntoView({ behavior: "smooth", inline: "center" });
 }
 
-// ===== Schedule & Tab =====
 function renderSchedule() {
   document.getElementById("dayTitle").textContent = `${days[currentDay].date} ${days[currentDay].city}`;
 }
-
-
 
 // Tab 切換
 document.querySelectorAll(".tab").forEach(tab => {
@@ -240,80 +221,64 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
-// ===== 新增項目 =====
-async function saveToFirebase(coll, obj) {
-  try {
+// 新增資料到 Firebase
+async function saveToFirebase(coll, obj){
+  try{
     const docRef = await addDoc(coll, obj);
     obj.id = docRef.id;
     return obj;
-  } catch (e) {
-    alert(" 新增失敗，確認 Firebase 權限");
-    console.error("新增失敗", e);
+  }catch(e){
+    alert("新增失敗，請確認 Firebase 權限");
+    console.error(e);
     return null;
   }
 }
 
-window.addPlace = async function() {
+// 新增函數
+window.addPlace = async function(){
   const t = prompt("新增地點");
-  if (t && t.trim() !== "") {
-    const obj = await saveToFirebase(scheduleColl, { text: t, day: currentDay, category: currentCategory });
-    if (obj) {
-      data[currentDay][currentCategory].push(obj);
-      renderScheduleItems();
-    }
+  if(t && t.trim() !== ""){
+    const obj = await saveToFirebase(scheduleColl, { text:t, day:currentDay, category:currentCategory });
+    if(obj){ data[currentDay][currentCategory].push(obj); renderScheduleItems(); }
   }
 };
-
-window.addTodo = async function() {
+window.addTodo = async function(){
   const t = prompt("待辦事項");
-  if (t && t.trim() !== "") {
-    const obj = await saveToFirebase(todoColl, { text: t, day: currentDay });
-    if (obj) {
-      data[currentDay].todo.push(obj);
-      renderTodo();
-    }
+  if(t && t.trim() !== ""){
+    const obj = await saveToFirebase(todoColl, { text:t, day:currentDay });
+    if(obj){ data[currentDay].todo.push(obj); renderTodo(); }
   }
 };
-
-window.addLuggage = async function() {
+window.addLuggage = async function(){
   const t = prompt("行李項目");
-  if (t && t.trim() !== "") {
-    const obj = await saveToFirebase(luggageColl, { text: t });
-    if (obj) {
-      luggage.push(obj);
-      renderListWithDelete("luggageList", luggage, luggageColl);
-    }
+  if(t && t.trim() !== ""){
+    const obj = await saveToFirebase(luggageColl, { text:t });
+    if(obj){ luggage.push(obj); renderListWithDelete("luggageList", luggage, luggageColl); }
   }
 };
-
-window.addShopping = async function() {
+window.addShopping = async function(){
   const t = prompt("購物項目");
-  if (t && t.trim() !== "") {
-    const obj = await saveToFirebase(shoppingColl, { text: t });
-    if (obj) {
-      shopping.push(obj);
-      renderListWithDelete("shoppingList", shopping, shoppingColl);
-    }
+  if(t && t.trim() !== ""){
+    const obj = await saveToFirebase(shoppingColl, { text:t });
+    if(obj){ shopping.push(obj); renderListWithDelete("shoppingList", shopping, shoppingColl); }
   }
 };
 
-// ===== 渲染 =====
-function renderListWithDelete(containerId, arr, coll) {
+// 渲染列表（待辦、行李、購物）
+function renderListWithDelete(containerId, arr, coll){
   const container = document.getElementById(containerId);
   container.innerHTML = "";
-  arr.forEach((item, index) => {
+  arr.forEach((item, index)=>{
     const li = document.createElement("li");
     li.textContent = item.text;
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "X";
     delBtn.style.marginLeft = "8px";
-    delBtn.onclick = async () => {
-      arr.splice(index, 1);
+    delBtn.onclick = async ()=>{
+      arr.splice(index,1);
       li.remove();
-      if (item.id) {
-        await deleteDoc(doc(db, coll.path, item.id));
-      }
+      if(item.id) await deleteDoc(doc(db, coll.path, item.id));
     };
 
     li.appendChild(delBtn);
@@ -321,19 +286,50 @@ function renderListWithDelete(containerId, arr, coll) {
   });
 }
 
+// 渲染待辦
+function renderTodo(){
+  renderListWithDelete("todoList", data[currentDay].todo, todoColl);
+}
 
-// ===== 初始化，讀 Firebase =====
-async function init() {
+// ===== 初始化 =====
+async function init(){
+  // 清空
+  data.forEach(day => { day.spot=[]; day.food=[]; day.stay=[]; day.todo=[]; });
+  luggage.length=0; shopping.length=0;
 
-data.forEach(day => {
-  day.spot = [];
-  day.food = [];
-  day.stay = [];
-  day.todo = [];
-});
-luggage.length = 0;
-shopping.length = 0;
+  // 讀 Firebase
+  const loadCollection = async (coll, targetArr, dayKey=null, categoryKey=null)=>{
+    const snapshot = await getDocs(coll);
+    snapshot.forEach(docSnap=>{
+      const item = docSnap.data();
+      item.id = docSnap.id;
+      if(dayKey!==null && categoryKey!==null){
+        const dayIndex = Number(item[dayKey]);
+        const cat = item[categoryKey];
+        if(!isNaN(dayIndex) && targetArr[dayIndex] && targetArr[dayIndex][cat]){
+          targetArr[dayIndex][cat].push(item);
+        }
+      }else{
+        targetArr.push(item);
+      }
+    });
+  };
 
+  await loadCollection(scheduleColl, data, "day","category");
+  await loadCollection(luggageColl, luggage);
+  await loadCollection(shoppingColl, shopping);
+
+  const todoSnap = await getDocs(todoColl);
+  todoSnap.forEach(docSnap=>{
+    const item = docSnap.data();
+    item.id = docSnap.id;
+    const dayIndex = Number(item.day);
+    if(!isNaN(dayIndex) && data[dayIndex]){
+      data[dayIndex].todo.push(item);
+    }
+  });
+
+  // render
   renderDayButtons();
   renderSchedule();
   renderScheduleItems();
@@ -341,52 +337,25 @@ shopping.length = 0;
   renderListWithDelete("luggageList", luggage, luggageColl);
   renderListWithDelete("shoppingList", shopping, shoppingColl);
 
-  // ===== 從 Firebase 讀資料 =====
-  const loadCollection = async (coll, targetArr, dayKey = null, categoryKey = null) => {
-    const snapshot = await getDocs(coll);
-    snapshot.forEach(docSnap => {
-      const item = docSnap.data();
-      item.id = docSnap.id;
-      if (dayKey !== null && categoryKey !== null) {
-        const dayIndex = Number(item[dayKey]);
-        const cat = item[categoryKey];
-        if (!isNaN(dayIndex) && targetArr[dayIndex] && targetArr[dayIndex][cat]) {
-          targetArr[dayIndex][cat].push(item);
-        }
-      } else {
-        targetArr.push(item);
+  // ===== 可選：即時同步 =====
+  onSnapshot(scheduleColl, snapshot=>{
+    snapshot.docChanges().forEach(change=>{
+      const item = change.doc.data(); item.id = change.doc.id;
+      if(change.type==="added"){
+        data[item.day][item.category].push(item);
+      }
+      if(change.type==="removed"){
+        const arr = data[item.day][item.category];
+        const idx = arr.findIndex(i=>i.id===item.id);
+        if(idx>-1) arr.splice(idx,1);
       }
     });
-  };
-
-  await loadCollection(scheduleColl, data, "day", "category");
-  await loadCollection(luggageColl, luggage);
-  await loadCollection(shoppingColl, shopping);
-
-const todoSnap = await getDocs(todoColl);
-todoSnap.forEach(docSnap => {
-  const item = docSnap.data();
-  item.id = docSnap.id;
-
-  const dayIndex = Number(item.day);
-  if (!isNaN(dayIndex) && data[dayIndex]) {
-    data[dayIndex].todo.push(item);
-  }
-});
-  
-  // 重新渲染畫面
-  renderScheduleItems();
-  renderTodo();
-  renderListWithDelete("luggageList", luggage, luggageColl);
-  renderListWithDelete("shoppingList", shopping, shoppingColl);
+    renderScheduleItems();
+  });
 }
 
 init();
-
-  
-
 </script>
-
 
 </body>
 </html>
