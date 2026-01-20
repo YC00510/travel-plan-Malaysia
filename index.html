@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>馬來西亞旅遊行程</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -147,6 +148,25 @@ body {
 
 <script>
 
+function saveData() {
+  localStorage.setItem("tripData", JSON.stringify({
+    data,
+    luggage,
+    shopping
+  }));
+}
+
+function loadData() {
+  const saved = localStorage.getItem("tripData");
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    parsed.data.forEach((d, i) => data[i] = d);
+    luggage.push(...parsed.luggage);
+    shopping.push(...parsed.shopping);
+  }
+}
+
+  
 const days = [
   { date: "2/10", city: "麻六甲" },
   { date: "2/11", city: "波德申" },
@@ -171,6 +191,7 @@ const luggage = [];
 const shopping = [];
 
 function init() {
+  loadData();
   const dayButtons = document.getElementById("dayButtons");
   days.forEach((d, i) => {
     const btn = document.createElement("button");
@@ -228,6 +249,7 @@ function addPlace() {
   const note = prompt("備註");
   if (name) {
     data[currentDay][currentCategory].push({ time, name, note });
+    saveData();
     render();
   }
 }
@@ -244,6 +266,7 @@ function addTodo() {
   const t = prompt("待辦事項");
   if (t) {
     data[currentDay].todo.push(t);
+    saveData(); 
     renderTodo();
   }
 }
@@ -258,6 +281,7 @@ function addLuggage() {
   const i = prompt("行李項目");
   if (i) {
     luggage.push(i);
+    saveData(); 
     render();
   }
 }
@@ -266,10 +290,20 @@ function addShopping() {
   const i = prompt("購物項目");
   if (i) {
     shopping.push(i);
+    saveData();
     render();
   }
 }
 
 init();
+
+  @media (max-width: 420px) {
+  .app {
+    width: 100%;
+    border-radius: 0;
+    padding: 16px;
+  }
+}
+
 </script>
 </body>
