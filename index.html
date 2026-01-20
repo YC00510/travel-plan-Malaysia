@@ -304,12 +304,17 @@ function renderTodo() {
 
 // ===== 初始化，讀 Firebase =====
 async function init() {
-  renderDayButtons();
-  renderSchedule();
-  renderScheduleItems();
-  renderTodo();
-  renderListWithDelete("luggageList", luggage, luggageColl);
-  renderListWithDelete("shoppingList", shopping, shoppingColl);
+
+data.forEach(day => {
+  day.spot = [];
+  day.food = [];
+  day.stay = [];
+  day.todo = [];
+});
+luggage.length = 0;
+shopping.length = 0;
+
+
 
   // ===== 從 Firebase 讀資料 =====
   const loadCollection = async (coll, targetArr, dayKey = null, categoryKey = null) => {
