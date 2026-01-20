@@ -325,10 +325,20 @@ async function init() {
   };
 
   await loadCollection(scheduleColl, data, "day", "category");
-  await loadCollection(todoColl, data, "day", "todo");
   await loadCollection(luggageColl, luggage);
   await loadCollection(shoppingColl, shopping);
 
+const todoSnap = await getDocs(todoColl);
+todoSnap.forEach(docSnap => {
+  const item = docSnap.data();
+  item.id = docSnap.id;
+
+  const dayIndex = Number(item.day);
+  if (!isNaN(dayIndex) && data[dayIndex]) {
+    data[dayIndex].todo.push(item);
+  }
+});
+  
   // 重新渲染畫面
   renderScheduleItems();
   renderTodo();
