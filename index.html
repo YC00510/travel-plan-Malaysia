@@ -304,7 +304,6 @@ async function init() {
   renderScheduleItems();
   renderTodo();
   renderListWithDelete("luggageList", luggage, luggageColl);
-  renderListWithDelete("todoList", todo, todoColl);
   renderListWithDelete("shoppingList", shopping, shoppingColl);
 
   // ===== 從 Firebase 讀資料 =====
@@ -325,7 +324,7 @@ async function init() {
     });
   };
 
-  await loadCollection(scheduleColl, data, "day", "schedule");
+  await loadCollection(scheduleColl, data, "day", "category");
   await loadCollection(todoColl, data, "day", "todo");
   await loadCollection(luggageColl, luggage);
   await loadCollection(shoppingColl, shopping);
@@ -339,7 +338,7 @@ async function init() {
 
 init();
 
-  loadPlacesFromFirebase();
+  
 
 </script>
 
