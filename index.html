@@ -101,11 +101,7 @@
 
 </div>
 
-<!-- 🔥 Firebase + JS（一定要是 module） -->
 <script type="module">
-  /* =====================
-     Firebase 初始化
-  ====================== */
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getFirestore } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
@@ -122,69 +118,140 @@
   const db = getFirestore(app);
   console.log("✅ Firebase 初始化成功", db);
 
- /* =====================
-   行程資料
-===================== */
-const days = [
-  { date: "2/9", city: "台灣出發" },
-  { date: "2/10", city: "麻六甲" },
-  { date: "2/11", city: "波德申" },
-  { date: "2/12", city: "波德申" },
-  { date: "2/13", city: "KL" },
-  { date: "2/14", city: "KL" },
-  { date: "2/15", city: "梳邦" },
-  { date: "2/16", city: "回台灣" }
-];
+  // ===================== 行程資料 ======================
+  const days = [
+    { date: "2/9", city: "台灣出發" },
+    { date: "2/10", city: "麻六甲" },
+    { date: "2/11", city: "波德申" },
+    { date: "2/12", city: "波德申" },
+    { date: "2/13", city: "KL" },
+    { date: "2/14", city: "KL" },
+    { date: "2/15", city: "梳邦" },
+    { date: "2/16", city: "回台灣" }
+  ];
 
-let currentDay = 0;
-let currentCategory = "spot";
+  let currentDay = 0;
+  let currentCategory = "spot";
 
-/* 每一天自己的行程 + 待辦 */
-const data = days.map(() => ({
-  spot: [],
-  food: [],
-  stay: [],
-  todo: []
-}));
+  // 每一天自己的行程 + 待辦
+  const data = days.map(() => ({
+    spot: [],
+    food: [],
+    stay: [],
+    todo: []
+  }));
 
-/* 全旅程共用 */
-const luggage = [];
-const shopping = [];
+  // 全旅程共用
+  const luggage = [];
+  const shopping = [];
 
- function renderSimpleList(id, arr) {
-  const ul = document.getElementById(id);
-  ul.innerHTML = "";
-  arr.forEach(item => {
-    const li = document.createElement("li");
-    li.textContent = item;
-    ul.appendChild(li);
+  // ====== 工具函數 ======
+  function renderSimpleList(id, arr) {
+    const ul = document.getElementById(id);
+    ul.innerHTML = "";
+    arr.forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      ul.appendChild(li);
+    });
+  }
+
+  // ====== Day 按鈕 ======
+  function renderDayButtons() {
+    const container = document.getElementById("dayButtons");
+    container.innerHTML = "";
+    days.forEach((day, index) => {
+      const btn = document.createElement("button");
+      btn.className = "day-btn";
+      if (index === currentDay) btn.classList.add("active");
+      btn.textContent = `Day ${index + 1}`;
+      btn.onclick = () => {
+        currentDay = index;
+        updateActiveDay();
+        renderSchedule();
+        renderTodo();
+        renderScheduleItems();
+      };
+      container.appendChild(btn);
+    });
+  }
+
+  function updateActiveDay() {
+    document.querySelectorAll(".day-btn").forEach((btn, idx) => {
+      btn.classList.toggle("active", idx === currentDay);
+    });
+  }
+
+  // ====== Schedule & Tab ======
+  function renderSchedule() {
+    document.getElementById("dayTitle").textContent = `${days[currentDay].date} ${days[currentDay].city}`;
+  }
+
+  function renderScheduleItems() {
+    const container = document.getElementById("schedule");
+    container.innerHTML = "";
+    const items = data[currentDay][currentCategory];
+    items.forEach(place => {
+      const div = document.createElement("div");
+      div.className = "card";
+      div.textContent = place;
+      container.appendChild(div);
+    });
+  }
+
+  // Tab 切換
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      currentCategory = tab.dataset.category;
+      renderScheduleItems();
+    });
   });
-}
+
+  // ====== 新增項目 ======
+  window.addPlace = function () {
+    const t = prompt("新增地點");
+    if (t) {
+      data[currentDay][currentCategory].push(t);
+      renderScheduleItems();
+    }
+  };
 
   window.addTodo = function () {
-  const t = prompt("待辦事項");
-  if (t) {
-    data[currentDay].todo.push(t);
-    renderSimpleList("todoList", data[currentDay].todo);
-  }
-};
+    const t = prompt("待辦事項");
+    if (t) {
+      data[currentDay].todo.push(t);
+      renderSimpleList("todoList", data[currentDay].todo);
+    }
+  };
 
   window.addLuggage = function () {
-  const t = prompt("行李項目");
-  if (t) {
-    luggage.push(t);
-    renderSimpleList("luggageList", luggage);
-  }
-};
+    const t = prompt("行李項目");
+    if (t) {
+      luggage.push(t);
+      renderSimpleList("luggageList", luggage);
+    }
+  };
 
   window.addShopping = function () {
-  const t = prompt("購物項目");
-  if (t) {
-    shopping.push(t);
-    renderSimpleList("shoppingList", shopping);
-  }
-};
+    const t = prompt("購物項目");
+    if (t) {
+      shopping.push(t);
+      renderSimpleList("shoppingList", shopping);
+    }
+  };
 
+  function renderTodo() {
+    renderSimpleList("todoList", data[currentDay].todo);
+  }
+
+  // ====== 初始化 ======
+  renderDayButtons();
+  renderSchedule();
+  renderScheduleItems();
+  renderTodo();
 </script>
+
 </body>
 </html>
