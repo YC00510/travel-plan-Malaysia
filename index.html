@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>馬來西亞旅遊行程</title>
 
+  
+
   <style>
     body {
       background: #f6f5f3;
@@ -82,6 +84,21 @@
 
   <div id="schedule"></div>
   <button class="add-btn" onclick="addPlace()">＋ 新增地點</button>
+
+  <hr>
+
+<h2>待辦事項</h2>
+<ul id="todoList"></ul>
+<button class="add-btn" onclick="addTodo()">＋ 新增待辦</button>
+
+<h2>行李清單</h2>
+<ul id="luggageList"></ul>
+<button class="add-btn" onclick="addLuggage()">＋ 新增行李</button>
+
+<h2>購物清單</h2>
+<ul id="shoppingList"></ul>
+<button class="add-btn" onclick="addShopping()">＋ 新增購物</button>
+
 </div>
 
 <!-- 🔥 Firebase + JS（一定要是 module） -->
@@ -123,6 +140,9 @@
   let currentCategory = "spot";
 
   const data = days.map(() => ({
+    const todo = [];
+const luggage = [];
+const shopping = [];
     spot: [],
     food: [],
     stay: []
@@ -188,6 +208,41 @@
     }
   };
 
+function renderSimpleList(id, arr) {
+  const ul = document.getElementById(id);
+  ul.innerHTML = "";
+  arr.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    ul.appendChild(li);
+  });
+}
+
+window.addTodo = function () {
+  const t = prompt("待辦事項");
+  if (t) {
+    todo.push(t);
+    renderSimpleList("todoList", todo);
+  }
+};
+
+window.addLuggage = function () {
+  const t = prompt("行李項目");
+  if (t) {
+    luggage.push(t);
+    renderSimpleList("luggageList", luggage);
+  }
+};
+
+window.addShopping = function () {
+  const t = prompt("購物項目");
+  if (t) {
+    shopping.push(t);
+    renderSimpleList("shoppingList", shopping);
+  }
+};
+
+  
   init();
 </script>
 </body>
