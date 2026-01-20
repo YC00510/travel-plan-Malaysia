@@ -105,6 +105,25 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
+  const db = getFirestore();
+
+async function loadPlacesFromFirebase() {
+  const querySnapshot = await getDocs(collection(db, "places"));
+
+  places = []; // 清空本地資料
+
+  querySnapshot.forEach((doc) => {
+    places.push({
+      id: doc.id,
+      text: doc.data().text
+    });
+  });
+
+  renderList();          // 重新畫左邊清單
+  renderScheduleItems(); // 重新畫右邊行程
+}
+
+
 // ===== Firebase 初始化 =====
 const firebaseConfig = {
   apiKey: "AIzaSyBOTh16RSCCca_FBUFiz0utDil-SlkZJKg",
@@ -335,6 +354,9 @@ async function init() {
 }
 
 init();
+
+  loadPlacesFromFirebase();
+
 </script>
 
 
