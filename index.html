@@ -135,18 +135,17 @@ const data = days.map(() => ({ spot: [], food: [], stay: [], todo: [] }));
 const luggage = [];
 const shopping = [];
 
-// ===== Firebase Collections =====
+// Firebase Collections
 const scheduleColl = collection(db, "schedule");
 const todoColl = collection(db, "todo");
 const luggageColl = collection(db, "luggage");
 const shoppingColl = collection(db, "shopping");
 
-// ===== 工具函數 =====
+// ===== 渲染工具 =====
 function renderScheduleItems() {
   const container = document.getElementById("schedule");
   container.innerHTML = "";
-
-  const items = data[currentDay][currentCategory];
+  const items = data[currentDay][currentCategory] || [];
   items.forEach((item, index) => {
     const div = document.createElement("div");
     div.className = "card";
@@ -168,7 +167,7 @@ function renderScheduleItems() {
     delBtn.onclick = async () => {
       items.splice(index, 1);
       div.remove();
-      if (item.id) await deleteDoc(doc(db, scheduleColl.path, item.id));
+      if(item.id) await deleteDoc(doc(db, scheduleColl.path, item.id));
     };
 
     div.appendChild(text);
@@ -178,13 +177,39 @@ function renderScheduleItems() {
   });
 }
 
+function renderListWithDelete(id, arr, coll) {
+  const container = document.getElementById(id);
+  container.innerHTML = "";
+  arr.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.textContent = item.text;
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "X";
+    delBtn.style.marginLeft = "10px";
+    delBtn.onclick = async () => {
+      arr.splice(index, 1);
+      li.remove();
+      if(item.id) await deleteDoc(doc(db, coll.path, item.id));
+    };
+
+    li.appendChild(delBtn);
+    container.appendChild(li);
+  });
+}
+
+function renderTodo() {
+  renderListWithDelete("todoList", data[currentDay].todo, todoColl);
+}
+
+// ===== Day 按鈕 =====
 function renderDayButtons() {
   const container = document.getElementById("dayButtons");
   container.innerHTML = "";
   days.forEach((day, idx) => {
     const btn = document.createElement("button");
     btn.className = "day-btn";
-    if (idx === currentDay) btn.classList.add("active");
+    if(idx === currentDay) btn.classList.add("active");
     btn.textContent = `Day ${idx + 1}`;
     btn.onclick = () => {
       currentDay = idx;
@@ -207,7 +232,7 @@ function updateActiveDay() {
 function scrollActiveDayIntoView() {
   const container = document.getElementById("dayButtons");
   const activeBtn = container.querySelector(".day-btn.active");
-  if (activeBtn) activeBtn.scrollIntoView({ behavior: "smooth", inline: "center" });
+  if(activeBtn) activeBtn.scrollIntoView({ behavior: "smooth", inline: "center" });
 }
 
 function renderSchedule() {
@@ -224,13 +249,13 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
-// ===== 新增資料 =====
+// ===== 新增項目 =====
 async function saveToFirebase(coll, obj) {
   try {
     const docRef = await addDoc(coll, obj);
     obj.id = docRef.id;
     return obj;
-  } catch (e) {
+  } catch(e) {
     alert("新增失敗，確認 Firebase 權限");
     console.error("新增失敗", e);
     return null;
@@ -239,86 +264,93 @@ async function saveToFirebase(coll, obj) {
 
 window.addPlace = async function() {
   const t = prompt("新增地點");
-  if (t && t.trim() !== "") {
+  if(t && t.trim() !== "") {
     await saveToFirebase(scheduleColl, { text: t, day: currentDay, category: currentCategory });
+    // 不再手動 push
   }
 };
+
 window.addTodo = async function() {
   const t = prompt("待辦事項");
-  if (t && t.trim() !== "") {
+  if(t && t.trim() !== "") {
     await saveToFirebase(todoColl, { text: t, day: currentDay });
   }
 };
+
 window.addLuggage = async function() {
   const t = prompt("行李項目");
-  if (t && t.trim() !== "") {
+  if(t && t.trim() !== "") {
     await saveToFirebase(luggageColl, { text: t });
   }
 };
+
 window.addShopping = async function() {
   const t = prompt("購物項目");
-  if (t && t.trim() !== "") {
+  if(t && t.trim() !== "") {
     await saveToFirebase(shoppingColl, { text: t });
   }
 };
 
-function renderTodo() {
-  renderListWithDelete("todoList", data[currentDay].todo, todoColl);
-}
-
 // ===== Firebase 監聽 =====
 function setupFirebaseListeners() {
+  // 行程
   onSnapshot(scheduleColl, snapshot => {
     snapshot.docChanges().forEach(change => {
-      const item = change.doc.data(); 
+      const item = change.doc.data();
       item.id = change.doc.id;
-      if(change.type === "added" && !data[item.day][item.category].some(i=>i.id===item.id)){
-        data[item.day][item.category].push(item);
-      }
-      if(change.type === "removed"){
-        const arr = data[item.day][item.category];
-        const idx = arr.findIndex(i=>i.id===item.id);
-        if(idx>-1) arr.splice(idx,1);
+      if(change.type === "added") {
+        if(!data[item.day][item.category].some(i => i.id === item.id)){
+          data[item.day][item.category].push(item);
+        }
+      } else if(change.type === "removed") {
+        data[item.day][item.category] = data[item.day][item.category].filter(i => i.id !== item.id);
       }
     });
     renderScheduleItems();
   });
 
+  // 待辦
   onSnapshot(todoColl, snapshot => {
     snapshot.docChanges().forEach(change => {
-      const item = change.doc.data(); 
+      const item = change.doc.data();
       item.id = change.doc.id;
-      if(change.type==="added" && !data[item.day].todo.some(i=>i.id===item.id)){
-        data[item.day].todo.push(item);
-      }
-      if(change.type==="removed"){
-        const arr = data[item.day].todo;
-        const idx = arr.findIndex(i=>i.id===item.id);
-        if(idx>-1) arr.splice(idx,1);
+      const dayIndex = Number(item.day);
+      if(change.type === "added") {
+        if(!data[dayIndex].todo.some(i => i.id === item.id)){
+          data[dayIndex].todo.push(item);
+        }
+      } else if(change.type === "removed") {
+        data[dayIndex].todo = data[dayIndex].todo.filter(i => i.id !== item.id);
       }
     });
     renderTodo();
   });
 
+  // 行李
   onSnapshot(luggageColl, snapshot => {
     snapshot.docChanges().forEach(change => {
-      const item = change.doc.data(); item.id = change.doc.id;
-      if(change.type==="added" && !luggage.some(i=>i.id===item.id)) luggage.push(item);
-      if(change.type==="removed"){
-        const idx = luggage.findIndex(i=>i.id===item.id);
-        if(idx>-1) luggage.splice(idx,1);
+      const item = change.doc.data();
+      item.id = change.doc.id;
+      if(change.type === "added") {
+        if(!luggage.some(i => i.id === item.id)) luggage.push(item);
+      } else if(change.type === "removed") {
+        const idx = luggage.findIndex(i => i.id === item.id);
+        if(idx !== -1) luggage.splice(idx,1);
       }
     });
     renderListWithDelete("luggageList", luggage, luggageColl);
   });
 
+  // 購物
   onSnapshot(shoppingColl, snapshot => {
     snapshot.docChanges().forEach(change => {
-      const item = change.doc.data(); item.id = change.doc.id;
-      if(change.type==="added" && !shopping.some(i=>i.id===item.id)) shopping.push(item);
-      if(change.type==="removed"){
-        const idx = shopping.findIndex(i=>i.id===item.id);
-        if(idx>-1) shopping.splice(idx,1);
+      const item = change.doc.data();
+      item.id = change.doc.id;
+      if(change.type === "added") {
+        if(!shopping.some(i => i.id === item.id)) shopping.push(item);
+      } else if(change.type === "removed") {
+        const idx = shopping.findIndex(i => i.id === item.id);
+        if(idx !== -1) shopping.splice(idx,1);
       }
     });
     renderListWithDelete("shoppingList", shopping, shoppingColl);
@@ -329,46 +361,11 @@ function setupFirebaseListeners() {
 async function init() {
   renderDayButtons();
   renderSchedule();
-
-  // 先抓一次資料，避免 F5 空白
-  const snapshot = await getDocs(scheduleColl);
-  snapshot.forEach(docSnap => {
-    const item = docSnap.data(); item.id = docSnap.id;
-    data[item.day][item.category].push(item);
-  });
-
-  const todoSnap = await getDocs(todoColl);
-  todoSnap.forEach(docSnap => {
-    const item = docSnap.data(); item.id = docSnap.id;
-    data[item.day].todo.push(item);
-  });
-
-  const luggageSnap = await getDocs(luggageColl);
-  luggageSnap.forEach(docSnap => {
-    const item = docSnap.data(); item.id = docSnap.id;
-    luggage.push(item);
-  });
-
-  const shoppingSnap = await getDocs(shoppingColl);
-  shoppingSnap.forEach(docSnap => {
-    const item = docSnap.data(); item.id = docSnap.id;
-    shopping.push(item);
-  });
-
-  // 先渲染一次畫面
-  renderScheduleItems();
-  renderTodo();
-  renderListWithDelete("luggageList", luggage, luggageColl);
-  renderListWithDelete("shoppingList", shopping, shoppingColl);
-
-  // 設定即時監聽
   setupFirebaseListeners();
 }
 
 init();
 
-
-</script>
 
 </body>
 </html>
