@@ -345,7 +345,7 @@ window.addTodo = async () => {
   const text = prompt("新增待辦");
   if (!text) return;
 
-  const obj = await save(todoColl, { text, day: currentDay });
+  const obj = await save(todoColl, { text });
   data[currentDay].todo.push(obj);
   renderCurrentView();
 };
