@@ -177,11 +177,26 @@ async function loadAllData() {
 
   // 行程
   const scheduleSnap = await getDocs(scheduleColl);
-  scheduleSnap.forEach(d => {
-    const item = d.data();
-    item.id = d.id;
-    data[item.day][item.category].push(item);
-  });
+scheduleSnap.forEach(d => {
+  const item = d.data();
+  item.id = d.id;
+
+  const day = Number(item.day);
+  const cat = item.category;
+
+  // 🚨 防呆檢查
+  if (
+    Number.isNaN(day) ||
+    !data[day] ||
+    !data[day][cat]
+  ) {
+    console.warn("⚠️ 略過壞資料", item);
+    return;
+  }
+
+  data[day][cat].push(item);
+});
+
 
   // 待辦
   const todoSnap = await getDocs(todoColl);
