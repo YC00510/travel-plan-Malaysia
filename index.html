@@ -1,3 +1,4 @@
+@ -0,0 +1,275 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -165,7 +166,6 @@ function loadData() {
     shopping.push(...parsed.shopping);
   }
 }
-
   
 const days = [
   { date: "2/10", city: "麻六甲" },
@@ -266,7 +266,7 @@ function addTodo() {
   const t = prompt("待辦事項");
   if (t) {
     data[currentDay].todo.push(t);
-    saveData(); 
+    saveData();
     renderTodo();
   }
 }
@@ -281,7 +281,7 @@ function addLuggage() {
   const i = prompt("行李項目");
   if (i) {
     luggage.push(i);
-    saveData(); 
+    saveData();
     render();
   }
 }
@@ -296,14 +296,5 @@ function addShopping() {
 }
 
 init();
-
-  @media (max-width: 420px) {
-  .app {
-    width: 100%;
-    border-radius: 0;
-    padding: 16px;
-  }
-}
-
 </script>
 </body>
