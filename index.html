@@ -294,20 +294,24 @@ window.addShopping = async function() {
 // ===== Firebase 監聽 =====
 function setupFirebaseListeners() {
   // 行程
-  onSnapshot(scheduleColl, snapshot => {
-    snapshot.docChanges().forEach(change => {
-      const item = change.doc.data();
-      item.id = change.doc.id;
-      if(change.type === "added") {
-        if(!data[item.day][item.category].some(i => i.id === item.id)){
-          data[item.day][item.category].push(item);
-        }
-      } else if(change.type === "removed") {
-        data[item.day][item.category] = data[item.day][item.category].filter(i => i.id !== item.id);
+onSnapshot(scheduleColl, snapshot => {
+  snapshot.docChanges().forEach(change => {
+    const item = change.doc.data();
+    item.id = change.doc.id;
+
+    if (change.type === "added") {
+      if (!data[item.day][item.category].some(i => i.id === item.id)) {
+        data[item.day][item.category].push(item);
       }
-    });
-    renderScheduleItems();
+    }
+
+    if (change.type === "removed") {
+      data[item.day][item.category] =
+        data[item.day][item.category].filter(i => i.id !== item.id);
+    }
   });
+
+});
 
   // 待辦
   onSnapshot(todoColl, snapshot => {
@@ -362,7 +366,14 @@ async function init() {
   renderDayButtons();
   renderSchedule();
   setupFirebaseListeners();
+
+  // ⭐ 等畫面準備好後，主動 render
+  setTimeout(() => {
+    renderScheduleItems();
+    renderTodo();
+  }, 0);
 }
+
 
 init();
 </script>
