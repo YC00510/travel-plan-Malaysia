@@ -2,21 +2,28 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const admin = require('firebase-admin');
-const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// ===== 連 Firebase =====
-const serviceAccount = require(path.join(__dirname, 'serviceAccountKey.json'));
+// ===== Firebase 初始化 =====
+let serviceAccount;
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // Render / 線上環境
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  // 本機開發
+  serviceAccount = require('./serviceAccountKey.json');
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://travel-plan-544b5.firebaseapp.com" // 改成你的 Firebase Database URL
 });
 
 const db = admin.firestore();
+
 
 // ===== schedule API =====
 app.get('/api/schedule', async (req, res) => {
