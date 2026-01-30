@@ -1,431 +1,108 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>馬來西亞旅遊行程</title>
-
-  <style>
-    /* 浮水印 */
-    .watermark {
-      position: fixed;           
-      bottom: 20px;            
-      right: 20px;             
-      font-size: 16px;           
-      font-weight: bold;         
-      color: rgba(0, 0, 0, 0.3); 
-      pointer-events: none;     
-      user-select: none;         
-      z-index: 9999;             
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.2); 
-    }
-
-    /* 標題卡片 */
-    .title-card {
-      background: #f3e9d2;      
-      padding: 12px 20px;
-      border-radius: 16px;       
-      text-align: center;
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-      color: #b3cccc;           
-    }
-
-    body {
-  background: #f6f5f3;
-  font-family: sans-serif;
-  display: flex;
-  flex-direction: column; 
-  align-items: center;    
-  padding: 20px;
-}
-    .app {
-      width: 380px;
-      background: #fff;
-      border-radius: 20px;
-      padding: 20px;
-    }
-    .days {
-      display: flex;
-      overflow-x: auto;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-    .day-btn {
-      padding: 6px 10px;
-      border-radius: 12px;
-      border: none;
-      background: #eee;
-      cursor: pointer;
-    }
-    .day-btn.active {
-      background: #e5d5c3;
-    }
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin: 10px 0;
-    }
-    .tab {
-      flex: 1;
-      padding: 8px;
-      border-radius: 20px;
-      border: none;
-      background: #eee;
-      cursor: pointer;
-    }
-    .tab.active {
-      background: #e8dcca;
-    }
-    .card {
-      background: #faf9f7;
-      padding: 12px;
-      border-radius: 12px;
-      margin-bottom: 10px;
-    }
-    .add-btn {
-      width: 100%;
-      margin: 12px 0;
-      padding: 10px;
-      border-radius: 12px;
-      border: none;
-      background: #d9cbb6;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>馬來西亞旅遊行程</title>
+<style>
+body{font-family:sans-serif;background:#f6f5f3;display:flex;flex-direction:column;align-items:center;padding:20px;}
+.title-card{background:#f3e9d2;padding:12px 20px;border-radius:16px;text-align:center;font-size:26px;font-weight:600;margin-bottom:20px;color:#b3cccc;box-shadow:0 4px 6px rgba(0,0,0,0.1);}
+.app{width:380px;background:#fff;border-radius:20px;padding:20px;}
+.days{display:flex;overflow-x:auto;gap:6px;margin-bottom:12px;}
+.day-btn{padding:6px 10px;border-radius:12px;border:none;background:#eee;cursor:pointer;}
+.day-btn.active{background:#e5d5c3;}
+.tabs{display:flex;gap:8px;margin:10px 0;}
+.tab{flex:1;padding:8px;border-radius:20px;border:none;background:#eee;cursor:pointer;}
+.tab.active{background:#e8dcca;}
+.card{background:#faf9f7;padding:12px;border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.add-btn{width:100%;margin:12px 0;padding:10px;border-radius:12px;border:none;background:#d9cbb6;cursor:pointer;}
+.watermark{position:fixed;bottom:20px;right:20px;font-size:16px;font-weight:bold;color:rgba(0,0,0,0.3);pointer-events:none;user-select:none;z-index:9999;text-shadow:1px 1px 2px rgba(0,0,0,0.2);}
+ul{padding-left:20px;} li{margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+</style>
 </head>
-
 <body>
-  
-  <div class="title-card">范家與李媽媽的馬來西亞旅遊行程</div>
-
-  
-  <div class="app">
-    <div class="days" id="dayButtons"></div>
-    <h2 id="dayTitle"></h2>
-
-    <div class="tabs">
-      <button class="tab active" data-category="spot">景點</button>
-      <button class="tab" data-category="food">美食</button>
-      <button class="tab" data-category="stay">住宿</button>
-    </div>
-
-    <div id="schedule"></div>
-    <button class="add-btn" onclick="addPlace()">＋ 新增地點</button>
-
-    <hr>
-
-    <h2>待辦事項</h2>
-    <ul id="todoList"></ul>
-    <button class="add-btn" onclick="addTodo()">＋ 新增待辦</button>
-
-    <h2>行李清單</h2>
-    <ul id="luggageList"></ul>
-    <button class="add-btn" onclick="addLuggage()">＋ 新增行李</button>
-
-    <h2>購物清單</h2>
-    <ul id="shoppingList"></ul>
-    <button class="add-btn" onclick="addShopping()">＋ 新增購物</button>
+<div class="title-card">范家與李媽媽的馬來西亞旅遊行程</div>
+<div class="app">
+  <div class="days" id="dayButtons"></div>
+  <h2 id="dayTitle"></h2>
+  <div class="tabs">
+    <button class="tab active" data-category="spot">景點</button>
+    <button class="tab" data-category="food">美食</button>
+    <button class="tab" data-category="stay">住宿</button>
   </div>
+  <div id="schedule"></div>
+  <button class="add-btn" onclick="addPlace()">＋ 新增地點</button>
+  <hr>
+  <h2>待辦事項</h2>
+  <ul id="todoList"></ul>
+  <button class="add-btn" onclick="addTodo()">＋ 新增待辦</button>
+  <h2>行李清單</h2>
+  <ul id="luggageList"></ul>
+  <button class="add-btn" onclick="addLuggage()">＋ 新增行李</button>
+  <h2>購物清單</h2>
+  <ul id="shoppingList"></ul>
+  <button class="add-btn" onclick="addShopping()">＋ 新增購物</button>
+</div>
+<div class="watermark">made by Yuchi</div>
 
-  
-  <div class="watermark">made by Yuchi</div>
-</body>
-</html>
+<script>
+const days=[{date:"2/9",city:"台灣出發"},{date:"2/10",city:"馬六甲"},{date:"2/11",city:"波德申"},{date:"2/12",city:"吉隆坡"},{date:"2/13",city:"吉隆坡"},{date:"2/14",city:"梳邦"},{date:"2/15",city:"梳邦"},{date:"2/16",city:"回台灣"}];
+let currentDay=0,currentCategory="spot",data=days.map(()=>({spot:[],food:[],stay:[],todo:[]})),luggage=[],shopping=[];
 
+async function fetchData(url){return(await fetch(url)).json();}
+async function postData(url,body){return(await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).json();}
+async function deleteData(url){await fetch(url,{method:'DELETE'});}
 
-<script type="module">
+async function loadAllData(){
+  (await fetchData('/api/schedule')).forEach(item=>{ if(data[item.day] && data[item.day][item.category]) data[item.day][item.category].push(item); });
+  (await fetchData('/api/todo')).forEach(item=>{ if(data[item.day] && data[item.day].todo) data[item.day].todo.push(item); });
+  (await fetchData('/api/luggage')).forEach(i=>luggage.push(i));
+  (await fetchData('/api/shopping')).forEach(i=>shopping.push(i));
+}
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
-
-/* ======================
-   Firebase 初始化
-====================== */
-const firebaseConfig = {
-  apiKey: "AIzaSyBOTh16RSCCca_FBUFiz0utDil-SlkZJKg",
-  authDomain: "travel-plan-544b5.firebaseapp.com",
-  projectId: "travel-plan-544b5",
-  storageBucket: "travel-plan-544b5.firebasestorage.app",
-  messagingSenderId: "794197854377",
-  appId: "1:794197854377:web:5ac7eb18afb56618cf01b8"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-
-const days = [
-  { date: "2/9", city: "台灣出發" },
-  { date: "2/10", city: "馬六甲" },
-  { date: "2/11", city: "波德申" },
-  { date: "2/12", city: "吉隆坡" },
-  { date: "2/13", city: "吉隆坡" },
-  { date: "2/14", city: "梳邦" },
-  { date: "2/15", city: "梳邦" },
-  { date: "2/16", city: "回台灣" }
-];
-
-let currentDay = 0;
-let currentCategory = "spot";
-
-const data = days.map(() => ({
-  spot: [],
-  food: [],
-  stay: [],
-  todo: []
-}));
-
-const luggage = [];
-const shopping = [];
-
-/* ======================
-   Firebase collections
-====================== */
-const scheduleColl = collection(db, "schedule");
-const todoColl = collection(db, "todo");
-const luggageColl = collection(db, "luggage");
-const shoppingColl = collection(db, "shopping");
-
-/* ======================
-   資料讀取
-====================== */
-async function loadAllData() {
-  // 清空
-  data.forEach(d => {
-    d.spot = [];
-    d.food = [];
-    d.stay = [];
-    d.todo = [];
+function renderDayButtons(){
+  const c=document.getElementById("dayButtons"); c.innerHTML="";
+  days.forEach((_,idx)=>{
+    const b=document.createElement("button"); b.className="day-btn"+(idx===currentDay?" active":"");
+    b.textContent=`Day ${idx+1}`; b.onclick=()=>{currentDay=idx; updateActiveDay(); renderCurrentView();};
+    c.appendChild(b);
   });
-  luggage.length = 0;
-  shopping.length = 0;
+}
+function updateActiveDay(){document.querySelectorAll(".day-btn").forEach((b,i)=>b.classList.toggle("active",i===currentDay));}
+function renderSchedule(){document.getElementById("dayTitle").textContent=`${days[currentDay].date} ${days[currentDay].city}`;}
 
-  // 行程
-  const scheduleSnap = await getDocs(scheduleColl);
-scheduleSnap.forEach(d => {
-  const item = d.data();
-  item.id = d.id;
-
-  const day = Number(item.day);
-  const cat = item.category;
-
-  // 防呆檢查
-  if (
-    Number.isNaN(day) ||
-    !data[day] ||
-    !data[day][cat]
-  ) {
-    console.warn("略過壞資料", item);
-    return;
-  }
-
-  data[day][cat].push(item);
-});
-
-
-  // 待辦
-  const todoSnap = await getDocs(todoColl);
-  todoSnap.forEach(d => {
-    const item = d.data();
-    item.id = d.id;
-    todo.push(item);
-  });
-
-  // 行李
-  const luggageSnap = await getDocs(luggageColl);
-  luggageSnap.forEach(d => {
-    const item = d.data();
-    item.id = d.id;
-    luggage.push(item);
-  });
-
-  // 購物
-  const shoppingSnap = await getDocs(shoppingColl);
-  shoppingSnap.forEach(d => {
-    const item = d.data();
-    item.id = d.id;
-    shopping.push(item);
+function renderScheduleItems(){
+  const c=document.getElementById("schedule"); c.innerHTML="";
+  data[currentDay][currentCategory].forEach((item,i)=>{
+    const card=document.createElement("div"); card.className="card";
+    const t=document.createElement("div"); t.textContent=item.text;
+    const mapBtn=document.createElement("button"); mapBtn.textContent="查看地圖"; mapBtn.onclick=()=>window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.text)}`,"_blank");
+    const delBtn=document.createElement("button"); delBtn.textContent="X"; delBtn.onclick=async()=>{ await deleteData(`/api/schedule/${item.id}`); data[currentDay][currentCategory].splice(i,1); renderScheduleItems(); };
+    card.append(t,mapBtn,delBtn); c.appendChild(card);
   });
 }
 
-/* ======================
-   Render functions
-====================== */
-function renderDayButtons() {
-  const container = document.getElementById("dayButtons");
-  container.innerHTML = "";
-
-  days.forEach((_, idx) => {
-    const btn = document.createElement("button");
-    btn.className = "day-btn";
-    if (idx === currentDay) btn.classList.add("active");
-    btn.textContent = `Day ${idx + 1}`;
-    btn.onclick = () => {
-      currentDay = idx;
-      updateActiveDay();
-      renderCurrentView();
-    };
-    container.appendChild(btn);
+function renderList(id,arr,apiBase){
+  const ul=document.getElementById(id); ul.innerHTML="";
+  arr.forEach((item,i)=>{
+    const li=document.createElement("li"); li.textContent=item.text;
+    const delBtn=document.createElement("button"); delBtn.textContent="X";
+    delBtn.onclick=async()=>{ await deleteData(`${apiBase}/${item.id}`); arr.splice(i,1); renderList(id,arr,apiBase); };
+    li.appendChild(delBtn); ul.appendChild(li);
   });
 }
 
-function updateActiveDay() {
-  document.querySelectorAll(".day-btn").forEach((btn, idx) => {
-    btn.classList.toggle("active", idx === currentDay);
-  });
-}
+function renderCurrentView(){ renderSchedule(); renderScheduleItems(); renderList("todoList",data[currentDay].todo,"/api/todo"); renderList("luggageList",luggage,"/api/luggage"); renderList("shoppingList",shopping,"/api/shopping"); }
 
-function renderSchedule() {
-  document.getElementById("dayTitle").textContent =
-    `${days[currentDay].date} ${days[currentDay].city}`;
-}
+window.addPlace=async()=>{ const t=prompt("新增地點"); if(!t)return; const obj=await postData("/api/schedule",{text:t,category:currentCategory,day:currentDay}); data[currentDay][currentCategory].push(obj); renderScheduleItems(); };
+window.addTodo=async()=>{ const t=prompt("新增待辦"); if(!t)return; const obj=await postData("/api/todo",{text:t,day:currentDay}); data[currentDay].todo.push(obj); renderCurrentView(); };
+window.addLuggage=async()=>{ const t=prompt("新增行李"); if(!t)return; const obj=await postData("/api/luggage",{text:t}); luggage.push(obj); renderCurrentView(); };
+window.addShopping=async()=>{ const t=prompt("新增購物"); if(!t)return; const obj=await postData("/api/shopping",{text:t}); shopping.push(obj); renderCurrentView(); };
 
-function renderScheduleItems() {
-  const container = document.getElementById("schedule");
-  container.innerHTML = "";
+document.querySelectorAll(".tab").forEach(tab=>{ tab.onclick=()=>{ document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active")); tab.classList.add("active"); currentCategory=tab.dataset.category; renderScheduleItems(); } });
 
-  const items = data[currentDay][currentCategory];
-  items.forEach((item, index) => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const text = document.createElement("div");
-    text.textContent = item.text;
-
-    const mapBtn = document.createElement("button");
-    mapBtn.textContent = "查看地圖";
-    mapBtn.onclick = () => {
-      window.open(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.text)}`,
-        "_blank"
-      );
-    };
-
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "X";
-    delBtn.onclick = async () => {
-      await deleteDoc(doc(db, scheduleColl.path, item.id));
-      items.splice(index, 1);
-      renderScheduleItems();
-    };
-
-    card.append(text, mapBtn, delBtn);
-    container.appendChild(card);
-  });
-}
-
-function renderList(id, arr, coll) {
-  const ul = document.getElementById(id);
-  ul.innerHTML = "";
-
-  arr.forEach((item, index) => {
-    const li = document.createElement("li");
-    li.textContent = item.text;
-
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "X";
-    delBtn.onclick = async () => {
-      await deleteDoc(doc(db, coll.path, item.id));
-      arr.splice(index, 1);
-      renderList(id, arr, coll);
-    };
-
-    li.appendChild(delBtn);
-    ul.appendChild(li);
-  });
-}
-
-function renderCurrentView() {
-  renderSchedule();
-  renderScheduleItems();
-  renderList("todoList", data[currentDay].todo, todoColl);
-  renderList("luggageList", luggage, luggageColl);
-  renderList("shoppingList", shopping, shoppingColl);
-}
-
-/* ======================
-   新增資料
-====================== */
-async function save(coll, obj) {
-  const ref = await addDoc(coll, obj);
-  obj.id = ref.id;
-  return obj;
-}
-
-window.addPlace = async () => {
-  const text = prompt("新增地點");
-  if (!text) return;
-
-  const obj = await save(scheduleColl, {
-    text,
-    day: currentDay,
-    category: currentCategory
-  });
-
-  data[currentDay][currentCategory].push(obj);
-  renderScheduleItems();
-};
-
-window.addTodo = async () => {
-  const text = prompt("新增待辦");
-  if (!text) return;
-
-  const obj = await save(todoColl, { text });
-  data[currentDay].todo.push(obj);
-  renderCurrentView();
-};
-
-window.addLuggage = async () => {
-  const text = prompt("新增行李");
-  if (!text) return;
-
-  const obj = await save(luggageColl, { text });
-  luggage.push(obj);
-  renderCurrentView();
-};
-
-window.addShopping = async () => {
-  const text = prompt("新增購物");
-  if (!text) return;
-
-  const obj = await save(shoppingColl, { text });
-  shopping.push(obj);
-  renderCurrentView();
-};
-
-/* ======================
-   Tabs
-====================== */
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.onclick = () => {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-    currentCategory = tab.dataset.category;
-    renderScheduleItems();
-  };
-});
-
-/* ======================
-   Init
-====================== */
-async function init() {
-  renderDayButtons();
-  await loadAllData();
-  renderCurrentView();
-}
-
+async function init(){ renderDayButtons(); await loadAllData(); renderCurrentView(); }
 init();
 </script>
-
 </body>
 </html>
