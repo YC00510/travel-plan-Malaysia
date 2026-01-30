@@ -16,7 +16,6 @@ body{font-family:sans-serif;background:#f6f5f3;display:flex;flex-direction:colum
 .tab.active{background:#e8dcca;}
 .card{background:#faf9f7;padding:12px;border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
 .add-btn{width:100%;margin:12px 0;padding:10px;border-radius:12px;border:none;background:#d9cbb6;cursor:pointer;}
-.watermark{position:fixed;bottom:20px;right:20px;font-size:16px;font-weight:bold;color:rgba(0,0,0,0.3);pointer-events:none;user-select:none;z-index:9999;text-shadow:1px 1px 2px rgba(0,0,0,0.2);}
 ul{padding-left:20px;} li{margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
 </style>
 </head>
@@ -25,6 +24,8 @@ ul{padding-left:20px;} li{margin-bottom:6px;display:flex;justify-content:space-b
 <div class="app">
   <div class="days" id="dayButtons"></div>
   <h2 id="dayTitle"></h2>
+
+  <!-- 景點、美食、住宿 tabs -->
   <div class="tabs">
     <button class="tab active" data-category="spot">景點</button>
     <button class="tab" data-category="food">美食</button>
@@ -32,76 +33,169 @@ ul{padding-left:20px;} li{margin-bottom:6px;display:flex;justify-content:space-b
   </div>
   <div id="schedule"></div>
   <button class="add-btn" onclick="addPlace()">＋ 新增地點</button>
+
   <hr>
   <h2>待辦事項</h2>
   <ul id="todoList"></ul>
   <button class="add-btn" onclick="addTodo()">＋ 新增待辦</button>
+
   <h2>行李清單</h2>
   <ul id="luggageList"></ul>
   <button class="add-btn" onclick="addLuggage()">＋ 新增行李</button>
+
   <h2>購物清單</h2>
   <ul id="shoppingList"></ul>
   <button class="add-btn" onclick="addShopping()">＋ 新增購物</button>
 </div>
-<div class="watermark">made by Yuchi</div>
 
 <script>
 const days=[{date:"2/9",city:"台灣出發"},{date:"2/10",city:"馬六甲"},{date:"2/11",city:"波德申"},{date:"2/12",city:"吉隆坡"},{date:"2/13",city:"吉隆坡"},{date:"2/14",city:"梳邦"},{date:"2/15",city:"梳邦"},{date:"2/16",city:"回台灣"}];
-let currentDay=0,currentCategory="spot",data=days.map(()=>({spot:[],food:[],stay:[],todo:[]})),luggage=[],shopping=[];
+let currentDay=0,currentCategory="spot",data=[],todo=[],luggage=[],shopping=[];
 
-async function fetchData(url){return(await fetch(url)).json();}
-async function postData(url,body){return(await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).json();}
-async function deleteData(url){await fetch(url,{method:'DELETE'});}
+// 從後端抓資料
+async function fetchAllData(){
+  // 行程
+  const scheduleRes = await fetch("http://localhost:3000/api/schedule");
+  const scheduleData = await scheduleRes.json();
+  data = days.map(()=>({spot:[],food:[],stay:[],todo:[]})); 
+  scheduleData.forEach(item=>{
+    if(data[item.day] && data[item.category]) data[item.day][item.category].push(item);
+  });
 
-async function loadAllData(){
-  (await fetchData('/api/schedule')).forEach(item=>{ if(data[item.day] && data[item.day][item.category]) data[item.day][item.category].push(item); });
-  (await fetchData('/api/todo')).forEach(item=>{ if(data[item.day] && data[item.day].todo) data[item.day].todo.push(item); });
-  (await fetchData('/api/luggage')).forEach(i=>luggage.push(i));
-  (await fetchData('/api/shopping')).forEach(i=>shopping.push(i));
+  // 待辦
+  const todoRes = await fetch("http://localhost:3000/api/todo");
+  todo = await todoRes.json();
+
+  // 行李
+  const luggageRes = await fetch("http://localhost:3000/api/luggage");
+  luggage = await luggageRes.json();
+
+  // 購物
+  const shoppingRes = await fetch("http://localhost:3000/api/shopping");
+  shopping = await shoppingRes.json();
 }
 
+// 渲染按鈕
 function renderDayButtons(){
   const c=document.getElementById("dayButtons"); c.innerHTML="";
   days.forEach((_,idx)=>{
-    const b=document.createElement("button"); b.className="day-btn"+(idx===currentDay?" active":"");
-    b.textContent=`Day ${idx+1}`; b.onclick=()=>{currentDay=idx; updateActiveDay(); renderCurrentView();};
+    const b=document.createElement("button"); 
+    b.className="day-btn"+(idx===currentDay?" active":"");
+    b.textContent=`Day ${idx+1}`;
+    b.onclick=()=>{currentDay=idx; updateActiveDay(); renderCurrentView();};
     c.appendChild(b);
   });
 }
-function updateActiveDay(){document.querySelectorAll(".day-btn").forEach((b,i)=>b.classList.toggle("active",i===currentDay));}
-function renderSchedule(){document.getElementById("dayTitle").textContent=`${days[currentDay].date} ${days[currentDay].city}`;}
+function updateActiveDay(){
+  document.querySelectorAll(".day-btn").forEach((b,i)=>b.classList.toggle("active",i===currentDay));
+}
 
+// 渲染行程
 function renderScheduleItems(){
+  document.getElementById("dayTitle").textContent=`${days[currentDay].date} ${days[currentDay].city}`;
   const c=document.getElementById("schedule"); c.innerHTML="";
   data[currentDay][currentCategory].forEach((item,i)=>{
     const card=document.createElement("div"); card.className="card";
     const t=document.createElement("div"); t.textContent=item.text;
-    const mapBtn=document.createElement("button"); mapBtn.textContent="查看地圖"; mapBtn.onclick=()=>window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.text)}`,"_blank");
-    const delBtn=document.createElement("button"); delBtn.textContent="X"; delBtn.onclick=async()=>{ await deleteData(`/api/schedule/${item.id}`); data[currentDay][currentCategory].splice(i,1); renderScheduleItems(); };
-    card.append(t,mapBtn,delBtn); c.appendChild(card);
+    const delBtn=document.createElement("button"); delBtn.textContent="X";
+    delBtn.onclick=async()=>{
+      await fetch(`http://localhost:3000/api/schedule/${item.id}`,{method:'DELETE'});
+      data[currentDay][currentCategory].splice(i,1);
+      renderScheduleItems();
+    };
+    card.append(t,delBtn); c.appendChild(card);
   });
 }
 
+// 渲染清單（待辦、行李、購物）
 function renderList(id,arr,apiBase){
   const ul=document.getElementById(id); ul.innerHTML="";
   arr.forEach((item,i)=>{
-    const li=document.createElement("li"); li.textContent=item.text;
+    const li=document.createElement("li");
+    li.textContent=item.text;
     const delBtn=document.createElement("button"); delBtn.textContent="X";
-    delBtn.onclick=async()=>{ await deleteData(`${apiBase}/${item.id}`); arr.splice(i,1); renderList(id,arr,apiBase); };
-    li.appendChild(delBtn); ul.appendChild(li);
+    delBtn.onclick=async()=>{
+      await fetch(`${apiBase}/${item.id}`,{method:'DELETE'});
+      arr.splice(i,1);
+      renderList(id,arr,apiBase);
+    };
+    li.appendChild(delBtn);
+    ul.appendChild(li);
   });
 }
 
-function renderCurrentView(){ renderSchedule(); renderScheduleItems(); renderList("todoList",data[currentDay].todo,"/api/todo"); renderList("luggageList",luggage,"/api/luggage"); renderList("shoppingList",shopping,"/api/shopping"); }
+// 新增地點
+async function addPlace(){
+  const t=prompt("新增地點"); if(!t) return;
+  const res = await fetch("http://localhost:3000/api/schedule",{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:t, category:currentCategory, day:currentDay})
+  });
+  const obj = await res.json();
+  data[currentDay][currentCategory].push(obj);
+  renderScheduleItems();
+}
 
-window.addPlace=async()=>{ const t=prompt("新增地點"); if(!t)return; const obj=await postData("/api/schedule",{text:t,category:currentCategory,day:currentDay}); data[currentDay][currentCategory].push(obj); renderScheduleItems(); };
-window.addTodo=async()=>{ const t=prompt("新增待辦"); if(!t)return; const obj=await postData("/api/todo",{text:t,day:currentDay}); data[currentDay].todo.push(obj); renderCurrentView(); };
-window.addLuggage=async()=>{ const t=prompt("新增行李"); if(!t)return; const obj=await postData("/api/luggage",{text:t}); luggage.push(obj); renderCurrentView(); };
-window.addShopping=async()=>{ const t=prompt("新增購物"); if(!t)return; const obj=await postData("/api/shopping",{text:t}); shopping.push(obj); renderCurrentView(); };
+// 新增待辦
+async function addTodo(){
+  const t=prompt("新增待辦"); if(!t) return;
+  const res = await fetch("http://localhost:3000/api/todo",{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:t, day:currentDay})
+  });
+  const obj = await res.json();
+  data[currentDay].todo.push(obj);
+  renderList("todoList",data[currentDay].todo,"http://localhost:3000/api/todo");
+}
 
-document.querySelectorAll(".tab").forEach(tab=>{ tab.onclick=()=>{ document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active")); tab.classList.add("active"); currentCategory=tab.dataset.category; renderScheduleItems(); } });
+// 新增行李
+async function addLuggage(){
+  const t=prompt("新增行李"); if(!t) return;
+  const res = await fetch("http://localhost:3000/api/luggage",{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:t})
+  });
+  const obj = await res.json();
+  luggage.push(obj);
+  renderList("luggageList",luggage,"http://localhost:3000/api/luggage");
+}
 
-async function init(){ renderDayButtons(); await loadAllData(); renderCurrentView(); }
+// 新增購物
+async function addShopping(){
+  const t=prompt("新增購物"); if(!t) return;
+  const res = await fetch("http://localhost:3000/api/shopping",{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:t})
+  });
+  const obj = await res.json();
+  shopping.push(obj);
+  renderList("shoppingList",shopping,"http://localhost:3000/api/shopping");
+}
+
+// tabs
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    currentCategory=tab.dataset.category;
+    renderScheduleItems();
+  }
+});
+
+// 初始化
+async function init(){
+  renderDayButtons();
+  await fetchAllData();
+  renderCurrentView();
+}
+
+function renderCurrentView(){
+  renderScheduleItems();
+  renderList("todoList",data[currentDay].todo,"http://localhost:3000/api/todo");
+  renderList("luggageList",luggage,"http://localhost:3000/api/luggage");
+  renderList("shoppingList",shopping,"http://localhost:3000/api/shopping");
+}
+
 init();
 </script>
 </body>

@@ -1,50 +1,97 @@
-import express from "express";
-import cors from "cors";
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
-import 'dotenv/config';
+const express = require("express");
+const cors = require("cors");
+const admin = require("firebase-admin");
+const serviceAccount = require("./serviceAccountKey.json"); // 金鑰檔案
+
+// 初始化 Firebase
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+const db = admin.firestore();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // 前端放 public
 
-// ----- Firebase 初始化 -----
-const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID
-};
+// ===== 行程 Schedule =====
 
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
-
-// ----- Helper -----
-function getCollection(name) { return collection(db, name); }
-
-// ----- API -----
-app.get("/api/:collection", async (req,res)=>{
-  const collName = req.params.collection;
-  const snap = await getDocs(getCollection(collName));
-  const items = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-  res.json(items);
+// 取得所有行程
+app.get("/api/schedule", async (req, res) => {
+  const snapshot = await db.collection("schedule").get();
+  const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  res.json(data);
 });
 
-app.post("/api/:collection", async (req,res)=>{
-  const collName = req.params.collection;
-  const ref = await addDoc(getCollection(collName), req.body);
-  res.json({ id: ref.id, ...req.body });
+// 新增行程
+app.post("/api/schedule", async (req, res) => {
+  const { text, category, day } = req.body;
+  const docRef = await db.collection("schedule").add({ text, category, day });
+  const doc = await docRef.get();
+  res.json({ id: doc.id, ...doc.data() });
 });
 
-app.delete("/api/:collection/:id", async (req,res)=>{
-  const collName = req.params.collection;
-  await deleteDoc(doc(getCollection(collName), req.params.id));
-  res.json({ ok:true });
+// 刪除行程
+app.delete("/api/schedule/:id", async (req, res) => {
+  await db.collection("schedule").doc(req.params.id).delete();
+  res.json({ success: true });
 });
 
-// ----- 啟動 -----
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, ()=>console.log(`Server running on http://localhost:${PORT}`));
+// ===== 待辦 Todo =====
+app.get("/api/todo", async (req, res) => {
+  const snapshot = await db.collection("todo").get();
+  const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  res.json(data);
+});
+
+app.post("/api/todo", async (req, res) => {
+  const { text, day } = req.body;
+  const docRef = await db.collection("todo").add({ text, day });
+  const doc = await docRef.get();
+  res.json({ id: doc.id, ...doc.data() });
+});
+
+app.delete("/api/todo/:id", async (req, res) => {
+  await db.collection("todo").doc(req.params.id).delete();
+  res.json({ success: true });
+});
+
+// ===== 行李 Luggage =====
+app.get("/api/luggage", async (req, res) => {
+  const snapshot = await db.collection("luggage").get();
+  const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  res.json(data);
+});
+
+app.post("/api/luggage", async (req, res) => {
+  const { text } = req.body;
+  const docRef = await db.collection("luggage").add({ text });
+  const doc = await docRef.get();
+  res.json({ id: doc.id, ...doc.data() });
+});
+
+app.delete("/api/luggage/:id", async (req, res) => {
+  await db.collection("luggage").doc(req.params.id).delete();
+  res.json({ success: true });
+});
+
+// ===== 購物 Shopping =====
+app.get("/api/shopping", async (req, res) => {
+  const snapshot = await db.collection("shopping").get();
+  const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  res.json(data);
+});
+
+app.post("/api/shopping", async (req, res) => {
+  const { text } = req.body;
+  const docRef = await db.collection("shopping").add({ text });
+  const doc = await docRef.get();
+  res.json({ id: doc.id, ...doc.data() });
+});
+
+app.delete("/api/shopping/:id", async (req, res) => {
+  await db.collection("shopping").doc(req.params.id).delete();
+  res.json({ success: true });
+});
+
+// ===== 啟動 Server =====
+app.listen(3000, () => console.log("Server running on http://localhost:3000"));
